@@ -3,26 +3,30 @@ if not game:IsLoaded() then game.Loaded:Wait() end
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualInputManager = game:GetService("VirtualInputManager")
+local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 
 local Flags = {
     AutoFarm = false,
     AutoQuest = false,
-    SafeHeight = 30 -- Немного снизил высоту для более стабильного хита
+    SafeHeight = 30
 }
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- Загружаем самую стабильную библиотеку ORION
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexsoftware/Orion/main/source')))()
 
-local Window = Rayfield:CreateWindow({
-   Name = "Higut Hub PRO MAX | Blox Fruits",
-   LoadingTitle = "Обход Safe Zone...",
-   LoadingSubtitle = "Версия для босса (Final Fix)",
-   ConfigurationSaving = { Enabled = false },
-   KeySystem = false
+local Window = OrionLib:MakeWindow({
+    Name = "Higut Hub | FIX ВЕРСИЯ", 
+    HidePremium = false, 
+    SaveConfig = false, 
+    IntroText = "Загрузка для Босса..."
 })
 
-local FarmTab = Window:CreateTab("Автофарм", 4483362458)
+local FarmTab = Window:MakeTab({
+    Name = "Автофарм",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
 
 -- ==========================================
 -- 1. АВТОКВЕСТ
@@ -94,16 +98,15 @@ task.spawn(function()
             if mainTarget then
                 local targetHrp = mainTarget:FindFirstChild("HumanoidRootPart")
                 if targetHrp then
-                    -- 1. ЗАЩИТА ОТ SAFE ZONE: Берем начальную позицию моба в поле
+                    -- Вылетаем из Safe Zone к мобу
                     if not farmPosition then
                         farmPosition = targetHrp.CFrame * CFrame.new(0, Flags.SafeHeight, 0)
                     end
                     
-                    -- Сначала вылетаем К МОБУ (из города), зависаем в воздухе
                     hrp.CFrame = farmPosition
                     hrp.Velocity = Vector3.new(0, 0, 0)
 
-                    -- 2. Стягиваем остальных мобов к нам под ноги
+                    -- Стягиваем остальных
                     local enemies = Workspace:FindFirstChild("Enemies")
                     if enemies then
                         for _, enemy in pairs(enemies:GetChildren()) do
@@ -123,7 +126,7 @@ task.spawn(function()
                         end
                     end
                     
-                    -- 3. Достаем оружие
+                    -- Достаем оружие
                     local tool = char:FindFirstChildOfClass("Tool")
                     if not tool then
                         for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
@@ -134,16 +137,14 @@ task.spawn(function()
                         end
                     end
                     
-                    -- 4. УЛЬТИМАТИВНЫЙ КЛИКЕР (Обход защиты игры)
+                    -- Атака
                     if tool then 
                         tool:Activate()
-                        -- Эмуляция системного нажатия мыши
-                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                        VirtualUser:CaptureController()
+                        VirtualUser:ClickButton1(Vector2.new()) 
                     end
                 end
             else
-                -- Если мобов рядом нет, сбрасываем позицию (позволит полететь к следующей пачке)
                 farmPosition = nil
             end
         else
@@ -156,22 +157,21 @@ end)
 -- ИНТЕРФЕЙС
 -- ==========================================
 
-FarmTab:CreateToggle({
-   Name = "1. Авто-Квест (Ближайший)",
-   CurrentValue = false,
-   Flag = "Toggle_AutoQuest",
-   Callback = function(Value)
+FarmTab:AddToggle({
+    Name = "1. Авто-Квест (Ближайший)",
+    Default = false,
+    Callback = function(Value)
         Flags.AutoQuest = Value
-   end,
+    end    
 })
 
-FarmTab:CreateToggle({
-   Name = "2. Воздух + Стяжка + Автоатака",
-   CurrentValue = false,
-   Flag = "Toggle_AutoFarm",
-   Callback = function(Value)
+FarmTab:AddToggle({
+    Name = "2. Воздух + Стяжка + Автоатака",
+    Default = false,
+    Callback = function(Value)
         Flags.AutoFarm = Value
-   end,
+    end    
 })
 
-Rayfield:LoadConfiguration()
+-- Инициализация Orion
+OrionLib:Init()
