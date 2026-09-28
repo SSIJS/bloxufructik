@@ -1,4 +1,6 @@
--- HIGUT HUB PRO MAX | Blox Fruits Edition
+-- =========================================================
+-- HIGUT HUB V3 ULTIMATE | BLOX FRUITS EDITION
+-- =========================================================
 if not game:IsLoaded() then game.Loaded:Wait() end
 
 local Players = game:GetService("Players")
@@ -9,27 +11,32 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Очистка старых копий интерфейса
-if CoreGui:FindFirstChild("HigutHubProUI") then
-    CoreGui.HigutHubProUI:Destroy()
-end
-if Workspace:FindFirstChild("HigutSkyParticles") then
-    Workspace.HigutSkyParticles:Destroy()
-end
+-- Очистка предыдущих версий
+if CoreGui:FindFirstChild("HigutHubV3UI") then CoreGui.HigutHubV3UI:Destroy() end
+if Workspace:FindFirstChild("HigutSkyParticles") then Workspace.HigutSkyParticles:Destroy() end
 
+-- Настройки и Флаги
 local Flags = {
     AutoFarm = false,
     AutoQuest = false,
+    FastAttack = true,
+    SafeZoneFilter = true,
+    Noclip = false,
     SkyParticles = true,
-    SafeHeight = 25
+    MobESP = false,
+    AutoStatMelee = false,
+    AutoStatDefense = false,
+    AutoStatSword = false,
+    SafeHeight = 22
 }
 
--- Главный ScreenGui
+-- Создание GUI
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "HigutHubProUI"
+ScreenGui.Name = "HigutHubV3UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -37,343 +44,322 @@ pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 ---------------------------------------------------------
--- 1. СКАЙ-ЧАСТИЦЫ (НЕОНОВЫЕ ЭФФЕКТЫ В НЕБЕ)
+-- 1. СКАЙ-ЧАСТИЦЫ (НЕОН В НЕБЕ)
 ---------------------------------------------------------
-local particleFolder = Instance.new("Folder")
+local particleFolder = Instance.new("Folder", Workspace)
 particleFolder.Name = "HigutSkyParticles"
-particleFolder.Parent = Workspace
 
-local particlePart = Instance.new("Part")
+local particlePart = Instance.new("Part", particleFolder)
 particlePart.Name = "SkyEmitterPart"
 particlePart.Anchored = true
 particlePart.CanCollide = false
 particlePart.Transparency = 1
-particlePart.Size = Vector3.new(200, 10, 200)
-particlePart.Parent = particleFolder
+particlePart.Size = Vector3.new(250, 10, 250)
 
-local particleEmitter = Instance.new("ParticleEmitter")
+local particleEmitter = Instance.new("ParticleEmitter", particlePart)
 particleEmitter.Texture = "rbxassetid://243664672"
 particleEmitter.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(170, 0, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 150, 255))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 200)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(160, 30, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 140, 255))
 })
-particleEmitter.Size = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 0.6),
-    NumberSequenceKeypoint.new(0.5, 1.4),
-    NumberSequenceKeypoint.new(1, 0)
-})
-particleEmitter.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 0.8),
-    NumberSequenceKeypoint.new(0.5, 0.2),
-    NumberSequenceKeypoint.new(1, 1)
-})
-particleEmitter.Lifetime = NumberRange.new(4, 7)
-particleEmitter.Rate = 40
-particleEmitter.Speed = NumberRange.new(3, 7)
+particleEmitter.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(0.5, 1.5), NumberSequenceKeypoint.new(1, 0)})
+particleEmitter.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.7), NumberSequenceKeypoint.new(0.5, 0.1), NumberSequenceKeypoint.new(1, 1)})
+particleEmitter.Lifetime = NumberRange.new(3, 6)
+particleEmitter.Rate = 35
+particleEmitter.Speed = NumberRange.new(4, 8)
 particleEmitter.SpreadAngle = Vector2.new(360, 360)
-particleEmitter.Parent = particlePart
 
 RunService.RenderStepped:Connect(function()
-    if Flags.SkyParticles then
+    if Flags.SkyParticles and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         particleEmitter.Enabled = true
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            particlePart.Position = LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 45, 0)
-        end
+        particlePart.Position = LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 40, 0)
     else
         particleEmitter.Enabled = false
     end
 end)
 
 ---------------------------------------------------------
--- 2. АНИМИРОВАННОЕ ОКНО ЗАГРУЗКИ
+-- 2. КРАСИВОЕ ОКНО ЗАГРУЗКИ
 ---------------------------------------------------------
-local LoadingFrame = Instance.new("Frame")
-LoadingFrame.Name = "LoadingFrame"
-LoadingFrame.Size = UDim2.new(0, 340, 0, 170)
-LoadingFrame.Position = UDim2.new(0.5, -170, 0.5, -85)
-LoadingFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+local LoadingFrame = Instance.new("Frame", ScreenGui)
+LoadingFrame.Size = UDim2.new(0, 360, 0, 180)
+LoadingFrame.Position = UDim2.new(0.5, -180, 0.5, -90)
+LoadingFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
 LoadingFrame.BorderSizePixel = 0
-LoadingFrame.Parent = ScreenGui
 
-local LoadingCorner = Instance.new("UICorner")
-LoadingCorner.CornerRadius = UDim.new(0, 14)
-LoadingCorner.Parent = LoadingFrame
+local LoadCorner = Instance.new("UICorner", LoadingFrame)
+LoadCorner.CornerRadius = UDim.new(0, 12)
 
-local LoadingStroke = Instance.new("UIStroke")
-LoadingStroke.Color = Color3.fromRGB(130, 80, 255)
-LoadingStroke.Thickness = 1.5
-LoadingStroke.Parent = LoadingFrame
+local LoadStroke = Instance.new("UIStroke", LoadingFrame)
+LoadStroke.Color = Color3.fromRGB(120, 60, 255)
+LoadStroke.Thickness = 1.5
 
-local LoadingTitle = Instance.new("TextLabel")
-LoadingTitle.Size = UDim2.new(1, 0, 0, 40)
-LoadingTitle.Position = UDim2.new(0, 0, 0, 15)
-LoadingTitle.BackgroundTransparency = 1
-LoadingTitle.Font = Enum.Font.GothamBold
-LoadingTitle.Text = "HIGUT HUB PRO MAX"
-LoadingTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-LoadingTitle.TextSize = 20
-LoadingTitle.Parent = LoadingFrame
+local LoadTitle = Instance.new("TextLabel", LoadingFrame)
+LoadTitle.Size = UDim2.new(1, 0, 0, 45)
+LoadTitle.Position = UDim2.new(0, 0, 0, 10)
+LoadTitle.BackgroundTransparency = 1
+LoadTitle.Font = Enum.Font.GothamBold
+LoadTitle.Text = "HIGUT HUB V3 ULTIMATE"
+LoadTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadTitle.TextSize = 20
 
-local LoadingStatus = Instance.new("TextLabel")
-LoadingStatus.Size = UDim2.new(1, -40, 0, 25)
-LoadingStatus.Position = UDim2.new(0, 20, 0, 55)
-LoadingStatus.BackgroundTransparency = 1
-LoadingStatus.Font = Enum.Font.Gotham
-LoadingStatus.Text = "Инициализация..."
-LoadingStatus.TextColor3 = Color3.fromRGB(170, 170, 200)
-LoadingStatus.TextSize = 13
-LoadingStatus.Parent = LoadingFrame
+local LoadStatus = Instance.new("TextLabel", LoadingFrame)
+LoadStatus.Size = UDim2.new(1, -40, 0, 25)
+LoadStatus.Position = UDim2.new(0, 20, 0, 60)
+LoadStatus.BackgroundTransparency = 1
+LoadStatus.Font = Enum.Font.Gotham
+LoadStatus.Text = "Проверка Safe Zone..."
+LoadStatus.TextColor3 = Color3.fromRGB(170, 170, 210)
+LoadStatus.TextSize = 13
 
-local BarBackground = Instance.new("Frame")
-BarBackground.Size = UDim2.new(0.85, 0, 0, 10)
-BarBackground.Position = UDim2.new(0.075, 0, 0.72, 0)
-BarBackground.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
-BarBackground.BorderSizePixel = 0
-BarBackground.Parent = LoadingFrame
+local BarBg = Instance.new("Frame", LoadingFrame)
+BarBg.Size = UDim2.new(0.85, 0, 0, 10)
+BarBg.Position = UDim2.new(0.075, 0, 0.72, 0)
+BarBg.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+BarBg.BorderSizePixel = 0
+Instance.new("UICorner", BarBg).CornerRadius = UDim.new(0, 5)
 
-local BarCorner = Instance.new("UICorner")
-BarCorner.CornerRadius = UDim.new(0, 5)
-BarCorner.Parent = BarBackground
-
-local BarFill = Instance.new("Frame")
+local BarFill = Instance.new("Frame", BarBg)
 BarFill.Size = UDim2.new(0, 0, 1, 0)
-BarFill.BackgroundColor3 = Color3.fromRGB(140, 60, 255)
+BarFill.BackgroundColor3 = Color3.fromRGB(140, 50, 255)
 BarFill.BorderSizePixel = 0
-BarFill.Parent = BarBackground
-
-local FillCorner = Instance.new("UICorner")
-FillCorner.CornerRadius = UDim.new(0, 5)
-FillCorner.Parent = BarFill
-
-local FillGradient = Instance.new("UIGradient")
-FillGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 50, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-})
-FillGradient.Parent = BarFill
+Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 
 ---------------------------------------------------------
--- 3. КРАСИВОЕ ОСНОВНОЕ МЕНЮ
+-- 3. ОСНОВНОЕ МЕНЮ С ВКЛАДКАМИ
 ---------------------------------------------------------
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 380, 0, 235)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -117)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 460, 0, 290)
+MainFrame.Position = UDim2.new(0.5, -230, 0.5, -145)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
 MainFrame.ClipsDescendants = true
-MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 14)
-MainCorner.Parent = MainFrame
-
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(90, 75, 140)
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Color = Color3.fromRGB(80, 65, 130)
 MainStroke.Thickness = 1.5
-MainStroke.Parent = MainFrame
 
--- Шапка (Top Bar)
-local TopBar = Instance.new("Frame")
-TopBar.Name = "TopBar"
+-- Шапка
+local TopBar = Instance.new("Frame", MainFrame)
 TopBar.Size = UDim2.new(1, 0, 0, 42)
-TopBar.BackgroundColor3 = Color3.fromRGB(26, 26, 36)
+TopBar.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
 TopBar.BorderSizePixel = 0
-TopBar.Parent = MainFrame
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 14)
 
-local TopBarCorner = Instance.new("UICorner")
-TopBarCorner.CornerRadius = UDim.new(0, 14)
-TopBarCorner.Parent = TopBar
+local TitleText = Instance.new("TextLabel", TopBar)
+TitleText.Size = UDim2.new(1, -50, 1, 0)
+TitleText.Position = UDim2.new(0, 15, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Font = Enum.Font.GothamBold
+TitleText.Text = "👑 HIGUT HUB V3 | Blox Fruits"
+TitleText.TextColor3 = Color3.fromRGB(240, 240, 255)
+TitleText.TextSize = 15
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
 
-local HeaderTitle = Instance.new("TextLabel")
-HeaderTitle.Size = UDim2.new(1, -60, 1, 0)
-HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
-HeaderTitle.BackgroundTransparency = 1
-HeaderTitle.Font = Enum.Font.GothamBold
-HeaderTitle.Text = "⚡ HIGUT HUB PRO | Blox Fruits"
-HeaderTitle.TextColor3 = Color3.fromRGB(240, 240, 255)
-HeaderTitle.TextSize = 15
-HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
-HeaderTitle.Parent = TopBar
-
--- Кнопка закрытия
-local CloseBtn = Instance.new("TextButton")
+local CloseBtn = Instance.new("TextButton", TopBar)
 CloseBtn.Size = UDim2.new(0, 28, 0, 28)
 CloseBtn.Position = UDim2.new(1, -35, 0, 7)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 80)
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 14
-CloseBtn.Parent = TopBar
+CloseBtn.TextSize = 13
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 8)
-CloseCorner.Parent = CloseBtn
-
-CloseBtn.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
-
--- Перетаскивание меню мышкой
-local dragging, dragInput, dragStart, startPos
+-- Драг окна
+local dragging, dragStart, startPos
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = MainFrame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
     end
 end)
-TopBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - dragStart
         MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
 
--- Контейнер для кнопок
-local ContentFrame = Instance.new("Frame")
-ContentFrame.Size = UDim2.new(1, -20, 1, -52)
-ContentFrame.Position = UDim2.new(0, 10, 0, 48)
-ContentFrame.BackgroundTransparency = 1
-ContentFrame.Parent = MainFrame
+-- Левая панель вкладок (Sidebar)
+local Sidebar = Instance.new("Frame", MainFrame)
+Sidebar.Size = UDim2.new(0, 120, 1, -42)
+Sidebar.Position = UDim2.new(0, 0, 0, 42)
+Sidebar.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+Sidebar.BorderSizePixel = 0
 
-local UIList = Instance.new("UIListLayout")
-UIList.SortOrder = Enum.SortOrder.LayoutOrder
-UIList.Padding = UDim.new(0, 8)
-UIList.Parent = ContentFrame
+local SideList = Instance.new("UIListLayout", Sidebar)
+SideList.Padding = UDim.new(0, 5)
+SideList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Функция создания стильных тумблеров
-local function CreateToggle(name, default, callback)
-    local ToggleBg = Instance.new("Frame")
-    ToggleBg.Size = UDim2.new(1, 0, 0, 44)
-    ToggleBg.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
-    ToggleBg.Parent = ContentFrame
+local Container = Instance.new("Frame", MainFrame)
+Container.Size = UDim2.new(1, -130, 1, -52)
+Container.Position = UDim2.new(0, 125, 0, 47)
+Container.BackgroundTransparency = 1
+
+local Tabs = {}
+local TabButtons = {}
+
+local function CreateTab(name, icon)
+    local TabPage = Instance.new("ScrollingFrame", Container)
+    TabPage.Size = UDim2.new(1, 0, 1, 0)
+    TabPage.BackgroundTransparency = 1
+    TabPage.ScrollBarThickness = 3
+    TabPage.Visible = false
     
-    local ToggleCorner = Instance.new("UICorner")
-    ToggleCorner.CornerRadius = UDim.new(0, 10)
-    ToggleCorner.Parent = ToggleBg
+    local TabList = Instance.new("UIListLayout", TabPage)
+    TabList.Padding = UDim.new(0, 6)
     
-    local ToggleLabel = Instance.new("TextLabel")
-    ToggleLabel.Size = UDim2.new(1, -70, 1, 0)
-    ToggleLabel.Position = UDim2.new(0, 15, 0, 0)
-    ToggleLabel.BackgroundTransparency = 1
-    ToggleLabel.Font = Enum.Font.GothamMedium
-    ToggleLabel.Text = name
-    ToggleLabel.TextColor3 = Color3.fromRGB(220, 220, 240)
-    ToggleLabel.TextSize = 13
-    ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    ToggleLabel.Parent = ToggleBg
+    local TabBtn = Instance.new("TextButton", Sidebar)
+    TabBtn.Size = UDim2.new(0.9, 0, 0, 36)
+    TabBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+    TabBtn.Font = Enum.Font.GothamMedium
+    TabBtn.Text = icon .. " " .. name
+    TabBtn.TextColor3 = Color3.fromRGB(180, 180, 200)
+    TabBtn.TextSize = 12
+    Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 8)
     
-    local SwitchTrack = Instance.new("TextButton")
-    SwitchTrack.Size = UDim2.new(0, 46, 0, 24)
-    SwitchTrack.Position = UDim2.new(1, -56, 0.5, -12)
-    SwitchTrack.BackgroundColor3 = default and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(60, 60, 80)
-    SwitchTrack.Text = ""
-    SwitchTrack.Parent = ToggleBg
+    TabBtn.MouseButton1Click:Connect(function()
+        for _, page in pairs(Tabs) do page.Visible = false end
+        for _, btn in pairs(TabButtons) do 
+            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 42) 
+            btn.TextColor3 = Color3.fromRGB(180, 180, 200)
+        end
+        TabPage.Visible = true
+        TabBtn.BackgroundColor3 = Color3.fromRGB(120, 50, 255)
+        TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end)
     
-    local TrackCorner = Instance.new("UICorner")
-    TrackCorner.CornerRadius = UDim.new(1, 0)
-    TrackCorner.Parent = SwitchTrack
+    table.insert(Tabs, TabPage)
+    table.insert(TabButtons, TabBtn)
+    return TabPage
+end
+
+-- Конструктор тумблеров
+local function AddToggle(parent, text, flagName, callback)
+    local ToggleFrame = Instance.new("Frame", parent)
+    ToggleFrame.Size = UDim2.new(0.96, 0, 0, 38)
+    ToggleFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
+    Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0, 8)
     
-    local SwitchKnob = Instance.new("Frame")
-    SwitchKnob.Size = UDim2.new(0, 18, 0, 18)
-    SwitchKnob.Position = default and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
-    SwitchKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SwitchKnob.Parent = SwitchTrack
+    local Label = Instance.new("TextLabel", ToggleFrame)
+    Label.Size = UDim2.new(1, -55, 1, 0)
+    Label.Position = UDim2.new(0, 10, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Font = Enum.Font.GothamMedium
+    Label.Text = text
+    Label.TextColor3 = Color3.fromRGB(220, 220, 240)
+    Label.TextSize = 12
+    Label.TextXAlignment = Enum.TextXAlignment.Left
     
-    local KnobCorner = Instance.new("UICorner")
-    KnobCorner.CornerRadius = UDim.new(1, 0)
-    KnobCorner.Parent = SwitchKnob
+    local Switch = Instance.new("TextButton", ToggleFrame)
+    Switch.Size = UDim2.new(0, 40, 0, 20)
+    Switch.Position = UDim2.new(1, -46, 0.5, -10)
+    Switch.BackgroundColor3 = Flags[flagName] and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(55, 55, 75)
+    Switch.Text = ""
+    Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
     
-    local state = default
+    local Knob = Instance.new("Frame", Switch)
+    Knob.Size = UDim2.new(0, 16, 0, 16)
+    Knob.Position = Flags[flagName] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+    Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
     
-    SwitchTrack.MouseButton1Click:Connect(function()
-        state = not state
-        local targetColor = state and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(60, 60, 80)
-        local targetPos = state and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
-        
-        TweenService:Create(SwitchTrack, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
-        TweenService:Create(SwitchKnob, TweenInfo.new(0.2), {Position = targetPos}):Play()
-        
-        callback(state)
+    Switch.MouseButton1Click:Connect(function()
+        Flags[flagName] = not Flags[flagName]
+        local active = Flags[flagName]
+        TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = active and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(55, 55, 75)}):Play()
+        TweenService:Create(Knob, TweenInfo.new(0.2), {Position = active and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}):Play()
+        if callback then callback(active) end
     end)
 end
 
--- Создаем тумблеры
-CreateToggle("1. Авто-Квест (Ближайший NPC)", Flags.AutoQuest, function(v) Flags.AutoQuest = v end)
-CreateToggle("2. Воздух + Стяжка + Автоатака", Flags.AutoFarm, function(v) Flags.AutoFarm = v end)
-CreateToggle("3. Космические Частицы в Небе", Flags.SkyParticles, function(v) Flags.SkyParticles = v end)
+-- Создание вкладок
+local FarmPage = CreateTab("Фарм", "🌾")
+local StatsPage = CreateTab("Статы", "📊")
+local PlayerPage = CreateTab("Игрок", "⚡")
+local VisualsPage = CreateTab("Визуалы", "👁️")
+
+-- Активация первой вкладки
+Tabs[1].Visible = true
+TabButtons[1].BackgroundColor3 = Color3.fromRGB(120, 50, 255)
+TabButtons[1].TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Элементы управления
+AddToggle(FarmPage, "Авто-Квест (Ближайший)", "AutoQuest")
+AddToggle(FarmPage, "Воздух + Стяжка + Атака", "AutoFarm")
+AddToggle(FarmPage, "Фильтр Safe Zone (Без бессмертных)", "SafeZoneFilter")
+AddToggle(FarmPage, "Fast Attack (Быстрый урон)", "FastAttack")
+
+AddToggle(StatsPage, "Авто-Стат: Ближний бой", "AutoStatMelee")
+AddToggle(StatsPage, "Авто-Стат: Защита", "AutoStatDefense")
+AddToggle(StatsPage, "Авто-Stat: Меч", "AutoStatSword")
+
+AddToggle(PlayerPage, "Noclip (Сквозь стены)", "Noclip", function(v)
+    if not v and LocalPlayer.Character then
+        for _, p in pairs(LocalPlayer.Character:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = true end
+        end
+    end
+end)
+
+AddToggle(VisualsPage, "Космические Частицы в Небе", "SkyParticles")
+AddToggle(VisualsPage, "ESP Подсветка Мобов", "MobESP")
 
 ---------------------------------------------------------
--- 4. АНИМАЦИЯ ПООЧЕРЕДНОЙ ЗАГРУЗКИ
+-- 4. АНИМАЦИЯ ЗАГРУЗКИ
 ---------------------------------------------------------
 task.spawn(function()
-    local steps = {
-        {0.25, "Загрузка ядра Higut Engine..."},
-        {0.55, "Создание частиц в небе..."},
-        {0.85, "Активация Fast Attack..."},
-        {1.00, "Успешно запущен!"}
-    }
-    
-    for _, step in ipairs(steps) do
-        TweenService:Create(BarFill, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(step[1], 0, 1, 0)}):Play()
-        LoadingStatus.Text = step[2]
-        task.wait(0.4)
+    local steps = {"Подключение обхода...", "Фильтрация SafeZone...", "Финализация..."}
+    for i, txt in ipairs(steps) do
+        LoadStatus.Text = txt
+        TweenService:Create(BarFill, TweenInfo.new(0.3), {Size = UDim2.new(i / #steps, 0, 1, 0)}):Play()
+        task.wait(0.35)
     end
-    
-    task.wait(0.2)
-    TweenService:Create(LoadingFrame, TweenInfo.new(0.25), {Size = UDim2.new(0, 340, 0, 0), Transparency = 1}):Play()
-    task.wait(0.25)
     LoadingFrame:Destroy()
-    
     MainFrame.Visible = true
-    MainFrame.Size = UDim2.new(0, 380, 0, 0)
-    TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 380, 0, 235)}):Play()
 end)
 
 ---------------------------------------------------------
--- 5. МОЩНАЯ АВТОАТАКА И СТЯЖКА
+-- 5. ЛОГИКА ФАРМА (С ПОЛНОЙ ИЗОЛЯЦИЕЙ SAFE ZONE)
 ---------------------------------------------------------
 local function AutoTakeQuest()
     pcall(function()
         local remotes = ReplicatedStorage:FindFirstChild("Remotes")
         if remotes and remotes:FindFirstChild("CommF_") then
-            local nearestNPC = nil
-            local minDist = 600
-            if Workspace:FindFirstChild("NPCs") then
-                for _, npc in pairs(Workspace.NPCs:GetChildren()) do
-                    if string.find(npc.Name, "Quest") then
-                        local dist = (LocalPlayer.Character.HumanoidRootPart.Position - npc.WorldPivot.Position).Magnitude
-                        if dist < minDist then
-                            minDist = dist
-                            nearestNPC = npc
-                        end
-                    end
-                end
-            end
-            if nearestNPC then
-                remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1) 
-            end
+            remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1) 
         end
     end)
 end
 
-local function GetNearestEnemy()
+-- Проверка: находится ли моб в Safe Zone (город)
+local function IsMobInSafeZone(mobHrp)
+    if not Flags.SafeZoneFilter then return false end
+    -- Если моб слишком близко к городским квестовикам или спавну
+    if Workspace:FindFirstChild("NPCs") then
+        for _, npc in pairs(Workspace.NPCs:GetChildren()) do
+            if (npc.WorldPivot.Position - mobHrp.Position).Magnitude < 90 then
+                return true -- Внутри города (бессмертный!)
+            end
+        end
+    end
+    return false
+end
+
+local function GetValidEnemy()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+    
     local nearest = nil
     local minDist = math.huge
     local enemies = Workspace:FindFirstChild("Enemies")
@@ -382,11 +368,14 @@ local function GetNearestEnemy()
         for _, enemy in pairs(enemies:GetChildren()) do
             local hrp = enemy:FindFirstChild("HumanoidRootPart")
             local hum = enemy:FindFirstChild("Humanoid")
-            if hrp and hum and hum.Health > 0 then
-                local dist = (char.HumanoidRootPart.Position - hrp.Position).Magnitude
-                if dist < minDist then
-                    minDist = dist
-                    nearest = enemy
+            -- Фильтр: Исключаем Trainee и бессмертных в Safe Zone
+            if hrp and hum and hum.Health > 0 and not string.find(enemy.Name, "Trainee") then
+                if not IsMobInSafeZone(hrp) then
+                    local dist = (char.HumanoidRootPart.Position - hrp.Position).Magnitude
+                    if dist < minDist then
+                        minDist = dist
+                        nearest = enemy
+                    end
                 end
             end
         end
@@ -394,13 +383,12 @@ local function GetNearestEnemy()
     return nearest
 end
 
--- Атакующий комплекс
-local function ExecuteCombo(char)
-    -- Достаем оружие
+-- Быстрая атака
+local function ExecuteAttack(char)
     local tool = char:FindFirstChildOfClass("Tool")
     if not tool then
         for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
-            if item:IsA("Tool") and (item.ToolTip:find("Melee") or item.ToolTip:find("Sword") or item.ToolTip:find("Blox Fruit")) then
+            if item:IsA("Tool") and (item.ToolTip:find("Melee") or item.ToolTip:find("Sword")) then
                 item.Parent = char
                 tool = item
                 break
@@ -410,36 +398,33 @@ local function ExecuteCombo(char)
     
     if tool then
         tool:Activate()
-        
-        pcall(function()
-            VirtualUser:CaptureController()
-            VirtualUser:Button1Down(Vector2.new(500, 500))
-            VirtualUser:Button1Up(Vector2.new(500, 500))
-            
-            VirtualInputManager:SendMouseButtonEvent(500, 500, 0, true, game, 0)
-            VirtualInputManager:SendMouseButtonEvent(500, 500, 0, false, game, 0)
-        end)
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton1(Vector2.new(600, 600))
+        if Flags.FastAttack then
+            VirtualInputManager:SendMouseButtonEvent(600, 600, 0, true, game, 0)
+            VirtualInputManager:SendMouseButtonEvent(600, 600, 0, false, game, 0)
+        end
     end
 end
 
 local farmPosition = nil
 
+-- Главный цикл фарма
 task.spawn(function()
     while task.wait(0.03) do
-        if Flags.AutoQuest then
-            AutoTakeQuest()
-        end
+        if Flags.AutoQuest then AutoTakeQuest() end
         
         if Flags.AutoFarm then
             local char = LocalPlayer.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
             
             local hrp = char.HumanoidRootPart
-            local mainTarget = GetNearestEnemy()
+            local mainTarget = GetValidEnemy()
             
             if mainTarget then
                 local targetHrp = mainTarget:FindFirstChild("HumanoidRootPart")
                 if targetHrp then
+                    -- Фиксируем позицию над мобом В ПОЛЕ (вдали от Safe Zone)
                     if not farmPosition then
                         farmPosition = targetHrp.CFrame * CFrame.new(0, Flags.SafeHeight, 0)
                     end
@@ -447,34 +432,51 @@ task.spawn(function()
                     hrp.CFrame = farmPosition
                     hrp.Velocity = Vector3.new(0, 0, 0)
 
-                    -- Стягивание прямо под ударной зоной персонажа (-4 по Y, -2 по Z)
+                    -- Стягиваем только ДОПУСТИМЫХ мобов в чистом поле
                     local enemies = Workspace:FindFirstChild("Enemies")
                     if enemies then
                         for _, enemy in pairs(enemies:GetChildren()) do
                             local eHrp = enemy:FindFirstChild("HumanoidRootPart")
                             local eHum = enemy:FindFirstChild("Humanoid")
-                            if eHrp and eHum and eHum.Health > 0 then
-                                if (eHrp.Position - hrp.Position).Magnitude < 350 then
+                            if eHrp and eHum and eHum.Health > 0 and not string.find(enemy.Name, "Trainee") then
+                                if not IsMobInSafeZone(eHrp) and (eHrp.Position - hrp.Position).Magnitude < 300 then
                                     eHrp.CFrame = hrp.CFrame * CFrame.new(0, -4, -2)
                                     eHrp.Velocity = Vector3.new(0, 0, 0)
                                     eHrp.CanCollide = false
-                                    
                                     eHum.WalkSpeed = 0
-                                    eHum.JumpPower = 0
                                     eHum.Sit = true 
                                 end
                             end
                         end
                     end
                     
-                    -- Удар
-                    ExecuteCombo(char)
+                    ExecuteAttack(char)
                 end
             else
-                farmPosition = nil
+                farmPosition = nil -- Поиск новой пачки
             end
         else
             farmPosition = nil
+        end
+    end
+end)
+
+-- Фоновый процесс: Noclip + Auto Stats
+RunService.Stepped:Connect(function()
+    if Flags.Noclip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.5) do
+        local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+        if remotes and remotes:FindFirstChild("CommF_") then
+            if Flags.AutoStatMelee then remotes.CommF_:InvokeServer("AddPoint", "Melee", 1) end
+            if Flags.AutoStatDefense then remotes.CommF_:InvokeServer("AddPoint", "Defense", 1) end
+            if Flags.AutoStatSword then remotes.CommF_:InvokeServer("AddPoint", "Sword", 1) end
         end
     end
 end)
