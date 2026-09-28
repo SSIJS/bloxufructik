@@ -3,21 +3,21 @@ if not game:IsLoaded() then game.Loaded:Wait() end
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualUser = game:GetService("VirtualUser")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local LocalPlayer = Players.LocalPlayer
 
 local Flags = {
     AutoFarm = false,
     AutoQuest = false,
-    SafeHeight = 35
+    SafeHeight = 30 -- Немного снизил высоту для более стабильного хита
 }
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "Higut Hub PRO MAX | Blox Fruits",
-   LoadingTitle = "Загрузка модулей...",
-   LoadingSubtitle = "Версия для босса - Исправленная",
+   LoadingTitle = "Обход Safe Zone...",
+   LoadingSubtitle = "Версия для босса (Final Fix)",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
 })
@@ -43,7 +43,6 @@ local function AutoTakeQuest()
                 end
             end
             if nearestNPC then
-                -- Пытаемся взять квест (BanditQuest1 как базовый шаблон)
                 remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1) 
             end
         end
@@ -51,7 +50,7 @@ local function AutoTakeQuest()
 end
 
 -- ==========================================
--- 2. ИДЕАЛЬНЫЙ ВОЗДУШНЫЙ ФАРМ С КЛИКЕРОМ
+-- 2. БОЕВОЙ ЦИКЛ (С ОБХОДОМ SAFE ZONE)
 -- ==========================================
 local function GetNearestEnemy()
     local char = LocalPlayer.Character
@@ -77,10 +76,10 @@ local function GetNearestEnemy()
     return nearest
 end
 
-local farmPosition = nil -- Фиксированная точка в воздухе, чтобы не улетать в космос
+local farmPosition = nil
 
 task.spawn(function()
-    while task.wait(0.05) do -- Ускорили цикл для плавности
+    while task.wait(0.05) do
         if Flags.AutoQuest then
             AutoTakeQuest()
         end
@@ -95,16 +94,16 @@ task.spawn(function()
             if mainTarget then
                 local targetHrp = mainTarget:FindFirstChild("HumanoidRootPart")
                 if targetHrp then
-                    -- 1. Фиксируем позицию фарма в воздухе ТОЛЬКО один раз на пачку мобов
+                    -- 1. ЗАЩИТА ОТ SAFE ZONE: Берем начальную позицию моба в поле
                     if not farmPosition then
                         farmPosition = targetHrp.CFrame * CFrame.new(0, Flags.SafeHeight, 0)
                     end
                     
-                    -- Держим игрока в воздухе
+                    -- Сначала вылетаем К МОБУ (из города), зависаем в воздухе
                     hrp.CFrame = farmPosition
                     hrp.Velocity = Vector3.new(0, 0, 0)
 
-                    -- 2. Стяжка мобов прямо к нам в воздух (чуть ниже и спереди)
+                    -- 2. Стягиваем остальных мобов к нам под ноги
                     local enemies = Workspace:FindFirstChild("Enemies")
                     if enemies then
                         for _, enemy in pairs(enemies:GetChildren()) do
@@ -112,12 +111,10 @@ task.spawn(function()
                             local eHum = enemy:FindFirstChild("Humanoid")
                             if eHrp and eHum and eHum.Health > 0 then
                                 if (eHrp.Position - hrp.Position).Magnitude < 350 then
-                                    -- Телепортируем моба к себе в небо (на 6 студов ниже, на 4 вперед)
-                                    eHrp.CFrame = hrp.CFrame * CFrame.new(0, -6, -4)
+                                    eHrp.CFrame = hrp.CFrame * CFrame.new(0, -7, -3)
                                     eHrp.Velocity = Vector3.new(0, 0, 0)
                                     eHrp.CanCollide = false
                                     
-                                    -- Оглушаем моба
                                     eHum.WalkSpeed = 0
                                     eHum.JumpPower = 0
                                     eHum.Sit = true 
@@ -137,14 +134,16 @@ task.spawn(function()
                         end
                     end
                     
-                    -- 4. Имитация реального клика (VirtualUser бьет 100%)
+                    -- 4. УЛЬТИМАТИВНЫЙ КЛИКЕР (Обход защиты игры)
                     if tool then 
-                        VirtualUser:CaptureController()
-                        VirtualUser:ClickButton1(Vector2.new()) 
+                        tool:Activate()
+                        -- Эмуляция системного нажатия мыши
+                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
                     end
                 end
             else
-                -- Если мобов нет, сбрасываем позицию
+                -- Если мобов рядом нет, сбрасываем позицию (позволит полететь к следующей пачке)
                 farmPosition = nil
             end
         else
