@@ -1,5 +1,5 @@
 -- =========================================================
--- HIGUT HUB V4 ULTIMATE | PURPLE WORLD EDITION
+-- HIGUT HUB V4 ULTIMATE | QUEST FIX & PURPLE WORLD
 -- =========================================================
 if not game:IsLoaded() then game.Loaded:Wait() end
 
@@ -16,7 +16,7 @@ local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Очистка прошлых версий
+-- Очистка прошлых интерфейсов
 if CoreGui:FindFirstChild("HigutHubV4Final") then 
     CoreGui.HigutHubV4Final:Destroy() 
 end
@@ -31,7 +31,7 @@ local Flags = {
 }
 
 ---------------------------------------------------------
--- 1. ФИОЛЕТОВЫЙ МИР И НЕБО (PURPLE WORLD)
+-- 1. ФИОЛЕТОВЫЙ МИР
 ---------------------------------------------------------
 local ColorCorr = Lighting:FindFirstChild("HigutPurpleCC") or Instance.new("ColorCorrectionEffect")
 ColorCorr.Name = "HigutPurpleCC"
@@ -59,7 +59,7 @@ end
 ApplyPurpleWorld()
 
 ---------------------------------------------------------
--- 2. БОЛЬШОЕ СТРОГОЕ МЕНЮ (600x420, БЕЗ СМАЙЛИКОВ)
+-- 2. СТРОГОЕ МЕНЮ (600x420, БЕЗ СМАЙЛИКОВ)
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "HigutHubV4Final"
@@ -81,7 +81,6 @@ local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Color3.fromRGB(130, 50, 220)
 MainStroke.Thickness = 2
 
--- Шапка
 local TopBar = Instance.new("Frame", MainFrame)
 TopBar.Size = UDim2.new(1, 0, 0, 46)
 TopBar.BackgroundColor3 = Color3.fromRGB(20, 18, 28)
@@ -109,7 +108,6 @@ CloseBtn.TextSize = 14
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
--- Перетаскивание
 local dragging, dragStart, startPos
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -130,7 +128,6 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Левая панель
 local Sidebar = Instance.new("Frame", MainFrame)
 Sidebar.Size = UDim2.new(0, 150, 1, -46)
 Sidebar.Position = UDim2.new(0, 0, 0, 46)
@@ -222,7 +219,6 @@ local function AddToggle(parent, text, flagName, callback)
     end)
 end
 
--- Вкладки
 local FarmPage = CreateTab("Автофарм")
 local VisualsPage = CreateTab("Визуалы")
 
@@ -230,23 +226,21 @@ Tabs[1].Visible = true
 TabButtons[1].BackgroundColor3 = Color3.fromRGB(130, 50, 220)
 TabButtons[1].TextColor3 = Color3.fromRGB(255, 255, 255)
 
-AddToggle(FarmPage, "Авто-Квест (Ближайший)", "AutoQuest")
+AddToggle(FarmPage, "Авто-Квест (Умный)", "AutoQuest")
 AddToggle(FarmPage, "Воздух + Стяжка + Автокликер", "AutoFarm")
-AddToggle(FarmPage, "Фильтр Safe Zone (Без бессмертных)", "SafeZoneFilter")
+AddToggle(FarmPage, "Фильтр Safe Zone", "SafeZoneFilter")
 
-AddToggle(VisualsPage, "Фиолетовый Мир и Небо", "PurpleWorld", function() ApplyPurpleWorld() end)
+AddToggle(VisualsPage, "Фиолетовый Мир", "PurpleWorld", function() ApplyPurpleWorld() end)
 AddToggle(VisualsPage, "ESP Подсветка Мобов", "MobESP")
 
 ---------------------------------------------------------
--- 3. НАДЁЖНАЯ СИСТЕМА ESP ДЛЯ МОБОВ
+-- 3. ESP СИСТЕМА
 ---------------------------------------------------------
 local function CreateESP(enemy)
     if enemy:FindFirstChild("HigutESP") then return end
-    
     local hrp = enemy:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
     
-    -- Highlight Контур
     local hl = Instance.new("Highlight")
     hl.Name = "HigutESP"
     hl.FillColor = Color3.fromRGB(160, 32, 240)
@@ -257,7 +251,6 @@ local function CreateESP(enemy)
     hl.Adornee = enemy
     hl.Parent = enemy
     
-    -- Текстовая табличка над мобом
     local bgui = Instance.new("BillboardGui")
     bgui.Name = "HigutTextESP"
     bgui.Adornee = hrp
@@ -301,12 +294,23 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- 4. ЧИСТЫЙ АВТОКЛИКЕР В ВОЗДУХЕ
+-- 4. ИСПРАВЛЕННЫЙ АВТОКВЕСТ И ФАРМ
 ---------------------------------------------------------
 local function AutoTakeQuest()
     pcall(function()
+        -- Проверка: висит ли уже квест на экране. Если да - пропускаем (защита от бага сервера)
+        local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+        if playerGui and playerGui:FindFirstChild("Main") then
+            local questUI = playerGui.Main:FindFirstChild("Quest")
+            if questUI and questUI.Visible then
+                return 
+            end
+        end
+        
         local remotes = ReplicatedStorage:FindFirstChild("Remotes")
         if remotes and remotes:FindFirstChild("CommF_") then
+            -- Добавлен MarineQuest для Морпехов и BanditQuest1 для Пиратов
+            remotes.CommF_:InvokeServer("StartQuest", "MarineQuest", 1)
             remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1) 
         end
     end)
@@ -316,7 +320,8 @@ local function IsMobInSafeZone(mobHrp)
     if not Flags.SafeZoneFilter then return false end
     if Workspace:FindFirstChild("NPCs") then
         for _, npc in pairs(Workspace.NPCs:GetChildren()) do
-            if (npc.WorldPivot.Position - mobHrp.Position).Magnitude < 90 then
+            -- Радиус уменьшен до 55, чтобы не задевать боевых мобов рядом с зоной
+            if (npc.WorldPivot.Position - mobHrp.Position).Magnitude < 55 then
                 return true
             end
         end
@@ -336,7 +341,9 @@ local function GetValidEnemy()
         for _, enemy in pairs(enemies:GetChildren()) do
             local hrp = enemy:FindFirstChild("HumanoidRootPart")
             local hum = enemy:FindFirstChild("Humanoid")
-            if hrp and hum and hum.Health > 0 and not string.find(enemy.Name, "Trainee") then
+            
+            -- Убрана жесткая блокировка Trainee. Теперь он просто проверяет, жив ли моб и не в сейф-зоне ли он.
+            if hrp and hum and hum.Health > 0 then
                 if not IsMobInSafeZone(hrp) then
                     local dist = (char.HumanoidRootPart.Position - hrp.Position).Magnitude
                     if dist < minDist then
@@ -394,13 +401,12 @@ task.spawn(function()
                     hrp.CFrame = farmPosition
                     hrp.Velocity = Vector3.new(0, 0, 0)
 
-                    -- Стягивание только валидных мобов
                     local enemies = Workspace:FindFirstChild("Enemies")
                     if enemies then
                         for _, enemy in pairs(enemies:GetChildren()) do
                             local eHrp = enemy:FindFirstChild("HumanoidRootPart")
                             local eHum = enemy:FindFirstChild("Humanoid")
-                            if eHrp and eHum and eHum.Health > 0 and not string.find(enemy.Name, "Trainee") then
+                            if eHrp and eHum and eHum.Health > 0 then
                                 if not IsMobInSafeZone(eHrp) and (eHrp.Position - hrp.Position).Magnitude < 300 then
                                     eHrp.CFrame = hrp.CFrame * CFrame.new(0, -4, -2)
                                     eHrp.Velocity = Vector3.new(0, 0, 0)
