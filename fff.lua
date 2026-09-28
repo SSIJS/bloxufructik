@@ -1,4 +1,4 @@
--- language: Luau, file: bloxfruits_hub.lua, target: Roblox / Executor
+-- language: Luau, file: bloxfruits_hub_fixed.lua, target: Roblox / Executor
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -17,9 +17,6 @@ pcall(function()
     if PlayerGui:FindFirstChild("BloxFruitsHub_KeySystem") then PlayerGui.BloxFruitsHub_KeySystem:Destroy() end
 end)
 
--- =========================================================================
--- СИСТЕМА КЛЮЧА
--- =========================================================================
 local KeyGui = Instance.new("ScreenGui")
 KeyGui.Name = "BloxFruitsHub_KeySystem"
 KeyGui.ResetOnSpawn = false
@@ -100,9 +97,6 @@ local function startMainHub()
     task.wait(0.3)
     KeyGui:Destroy()
 
-    -- =========================================================================
-    -- ВАТЕРМАРКА
-    -- =========================================================================
     local WatermarkGui = Instance.new("ScreenGui")
     WatermarkGui.Name = "BloxFruitsHub_Watermark"
     WatermarkGui.ResetOnSpawn = false
@@ -126,9 +120,6 @@ local function startMainHub()
     WatermarkText.Text = "Blox Fruits Hub"
     WatermarkText.Parent = WatermarkFrame
 
-    -- =========================================================================
-    -- ГЛАВНОЕ МЕНЮ
-    -- =========================================================================
     local MainGui = Instance.new("ScreenGui")
     MainGui.Name = "BloxFruitsHub_Main"
     MainGui.ResetOnSpawn = false
@@ -146,7 +137,6 @@ local function startMainHub()
 
     TweenService:Create(MainCanvas, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
 
-    -- Перетаскивание
     local DragFrame = Instance.new("Frame")
     DragFrame.Size = UDim2.new(1, 0, 0, 45)
     DragFrame.BackgroundTransparency = 1
@@ -176,7 +166,6 @@ local function startMainHub()
         end
     end)
 
-    -- Сайдбар
     local Sidebar = Instance.new("Frame")
     Sidebar.Size = UDim2.new(0, 220, 1, 0)
     Sidebar.BackgroundColor3 = Color3.fromRGB(10, 10, 13)
@@ -214,7 +203,6 @@ local function startMainHub()
     NavLayout.Padding = UDim.new(0, 4)
     NavLayout.Parent = NavList
 
-    -- Кнопки управления окном
     local TopControls = Instance.new("Frame")
     TopControls.Size = UDim2.new(0, 100, 0, 45)
     TopControls.Position = UDim2.new(1, -110, 0, 0)
@@ -273,7 +261,6 @@ local function startMainHub()
         end
     end)
 
-    -- Страницы
     local ContentArea = Instance.new("Frame")
     ContentArea.Size = UDim2.new(1, -20, 1, -15)
     ContentArea.Position = UDim2.new(0, 10, 0, 10)
@@ -408,13 +395,12 @@ local function startMainHub()
                 TextColor3 = state and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 195)
             }):Play()
             btn.Text = state and "ON" or "OFF"
-            callback(state)
+            pcall(function()
+                callback(state)
+            end)
         end)
     end
 
-    -- =========================================================================
-    -- КАТЕГОРИЯ 1: АВТОМАТИЧЕСКИЙ ФАРМ
-    -- =========================================================================
     createToggle(farmPage, "1. Auto Farm Level", "Checks level, gets quests, teleports, and kills mobs automatically.", function(st) end)
     createToggle(farmPage, "2. Auto Farm Mastery (Sword/Gun)", "Attacks enemies and finishes them with selected weapon skill.", function(st) end)
     createToggle(farmPage, "3. Auto Farm Mastery (Devil Fruit)", "Uses fruit abilities against groups of mobs to unlock Z, X, C, V, F.", function(st) end)
@@ -426,18 +412,12 @@ local function startMainHub()
     createToggle(farmPage, "9. Auto Cake Prince / Dough King", "Kills 500 mobs on Cake Island and defeats spawned boss.", function(st) end)
     createToggle(farmPage, "10. Auto Third Sea / Second Sea Quest", "Automates world transition quests.", function(st) end)
 
-    -- =========================================================================
-    -- КАТЕГОРИЯ 2: ТЕЛЕПОРТАЦИЯ И НАВИГАЦИЯ
-    -- =========================================================================
     createToggle(tpPage, "1. Teleport to Islands", "Instant teleportation to any selected island in current sea.", function(st) end)
     createToggle(tpPage, "2. Teleport to NPCs", "Teleports to specific merchants, quest givers, or trainers.", function(st) end)
     createToggle(tpPage, "3. Safe Teleport (Tween)", "Smooth high-speed movement through textures to bypass anti-cheat.", function(st) end)
     createToggle(tpPage, "4. Bypass Anti-Cheat Teleport", "Special movement algorithm with micro-pauses.", function(st) end)
     createToggle(tpPage, "5. Teleport to Sea 1 / 2 / 3", "Direct server travel between First, Second, and Third Seas.", function(st) end)
 
-    -- =========================================================================
-    -- КАТЕГОРИЯ 3: БОССЫ И РЕЙДЫ
-    -- =========================================================================
     createToggle(bossPage, "1. Auto Kill All Bosses", "Scans server for live bosses, teleports and kills them.", function(st) end)
     createToggle(bossPage, "2. Auto Saber Expert", "Completes Saber sword quest in First Sea automatically.", function(st) end)
     createToggle(bossPage, "3. Auto Bartilo Quest", "Completes Bartilo quest in Second Sea for Coliseum access.", function(st) end)
@@ -447,36 +427,24 @@ local function startMainHub()
     createToggle(bossPage, "7. Auto Cursed Dual Katana (CDK)", "Completes heavy scrolls and quests for CDK.", function(st) end)
     createToggle(bossPage, "8. Auto Soul Guitar", "Completes nighttime candle and puzzle quest in Third Sea.", function(st) end)
 
-    -- =========================================================================
-    -- КАТЕГОРИЯ 4: УПРАВЛЕНИЕ ДЬЯВОЛЬСКИМИ ФРУКТАМИ
-    -- =========================================================================
     createToggle(fruitPage, "1. Fruit Sniper (Auto Buy)", "Monitors fruit shop and buys selected fruit for beli.", function(st) end)
     createToggle(fruitPage, "2. Auto Random Fruit (Gacha)", "Buys random fruit from Gacha every 2 hours.", function(st) end)
     createToggle(fruitPage, "3. Fruit Finder / Tracker", "Scans map for spawned fruits and highlights them.", function(st) end)
     createToggle(fruitPage, "4. Auto Bring Fruits", "Collects all dropped fruits on server directly to hands.", function(st) end)
     createToggle(fruitPage, "5. Auto Store Fruits", "Stores all held fruits into permanent inventory storage.", function(st) end)
 
-    -- =========================================================================
-    -- КАТЕГОРИЯ 5: МОРСКИЕ АКТИВНОСТИ И ИВЕНТЫ
-    -- =========================================================================
     createToggle(seaPage, "1. Auto Sea Beast (SB) Farm", "Waits for Sea Beasts and destroys them for beli and fragments.", function(st) end)
     createToggle(seaPage, "2. Auto Ship Raid", "Finds and destroys attacking pirate ships in open sea.", function(st) end)
     createToggle(seaPage, "3. Auto Leviathan", "Finds Frozen Dimension, summons Leviathan, and destroys segments.", function(st) end)
     createToggle(seaPage, "4. Auto Mirage Island Hunter", "Finds Mirage Island in fog and activates moon look mechanic.", function(st) end)
     createToggle(seaPage, "5. Auto Chest Mirage", "Instant collection of all chests on Mirage Island.", function(st) end)
 
-    -- =========================================================================
-    -- КАТЕГОРИЯ 6: АВТОМАТИЗАЦИЯ ПЕРСОНАЖА
-    -- =========================================================================
     createToggle(charPage, "1. Auto Stats Distribution", "Automatically distributes stat points by priority.", function(st) end)
     createToggle(charPage, "2. Auto Buy Fighting Styles", "Buys new fighting styles when requirements are met.", function(st) end)
     createToggle(charPage, "3. Auto Ken Haki / Buso Haki Train", "Trains Observation and Buso Haki to maximum level.", function(st) end)
     createToggle(charPage, "4. Auto Observation V2", "Completes quests on Turtle Island to upgrade Observation Haki.", function(st) end)
     createToggle(charPage, "5. Auto Race V2 / V3 / V4", "Automates flowers, boss kills, and Time Temple trials.", function(st) end)
 
-    -- =========================================================================
-    -- КАТЕГОРИЯ 7: PVP И ТЮНИНГ БОЯ
-    -- =========================================================================
     createToggle(pvpPage, "1. Aimbot Skill / Gun", "Aims skills and guns automatically at players or mobs.", function(st) end)
     createToggle(pvpPage, "2. Player ESP / Wallhack", "Highlights player silhouettes, health, distance, and fruit.", function(st) end)
     createToggle(pvpPage, "3. Auto Bounty Farm", "Teleports to players, uses combos, and kills for bounty.", function(st) end)
@@ -485,17 +453,14 @@ local function startMainHub()
     createToggle(pvpPage, "6. Infinite Energy", "Freezes energy meter for endless dashes and heavy attacks.", function(st) end)
     createToggle(pvpPage, "7. Walk on Water / Jesus Fly", "Allows walking or flying over water without taking damage.", function(st) end)
 
-    -- =========================================================================
-    -- КАТЕГОРИЯ 8: УТИЛИТЫ И СЕРВЕР
-    -- =========================================================================
     createToggle(miscPage, "1. Auto Farm Chests", "Teleports to all chest spawn points for starter capital.", function(st) end)
     createToggle(miscPage, "2. Server Hop (Low Player / Fruit)", "Switches to another server with low player count.", function(st) end)
     createToggle(miscPage, "3. Rejoin Server", "Instantly reloads and reconnects to the exact same server.", function(st) end)
     createToggle(miscPage, "4. White Screen / CPU Optimizer", "Disables 3D rendering to reduce CPU and GPU load.", function(st) end)
     createToggle(miscPage, "5. Anti-AFK Kick", "Simulates micro-movements to prevent AFK disconnection.", function(st) end)
 
-    UserInputService.InputBegan:Connect(function(input)
-        if input.KeyCode == Enum.KeyCode.RightControl then
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == Enum.KeyCode.RightControl then
             MainCanvas.Visible = not MainCanvas.Visible
         end
     end)
