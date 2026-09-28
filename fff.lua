@@ -12,24 +12,75 @@ local Flags = {
     SafeHeight = 30
 }
 
--- Загружаем самую стабильную библиотеку ORION
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexsoftware/Orion/main/source')))()
+-- ==========================================
+-- 1. ЖЕЛЕЗОБЕТОННЫЙ ИНТЕРФЕЙС (БЕЗ ИНТЕРНЕТА)
+-- ==========================================
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local QuestBtn = Instance.new("TextButton")
+local FarmBtn = Instance.new("TextButton")
 
-local Window = OrionLib:MakeWindow({
-    Name = "Higut Hub | FIX ВЕРСИЯ", 
-    HidePremium = false, 
-    SaveConfig = false, 
-    IntroText = "Загрузка для Босса..."
-})
+ScreenGui.Name = "BossNativeHub"
+ScreenGui.Parent = game.CoreGui
 
-local FarmTab = Window:MakeTab({
-    Name = "Автофарм",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
+MainFrame.Size = UDim2.new(0, 200, 0, 150)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Можно двигать по экрану
+
+Title.Parent = MainFrame
+Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Font = Enum.Font.SourceSansBold
+Title.Text = "HIGUT HUB (Native)"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 18
+
+QuestBtn.Parent = MainFrame
+QuestBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+QuestBtn.Position = UDim2.new(0.05, 0, 0.3, 0)
+QuestBtn.Size = UDim2.new(0.9, 0, 0, 40)
+QuestBtn.Font = Enum.Font.SourceSansBold
+QuestBtn.Text = "Авто-Квест: OFF"
+QuestBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+QuestBtn.TextSize = 16
+
+FarmBtn.Parent = MainFrame
+FarmBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+FarmBtn.Position = UDim2.new(0.05, 0, 0.65, 0)
+FarmBtn.Size = UDim2.new(0.9, 0, 0, 40)
+FarmBtn.Font = Enum.Font.SourceSansBold
+FarmBtn.Text = "Воздух-Фарм: OFF"
+FarmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FarmBtn.TextSize = 16
+
+QuestBtn.MouseButton1Click:Connect(function()
+    Flags.AutoQuest = not Flags.AutoQuest
+    if Flags.AutoQuest then
+        QuestBtn.BackgroundColor3 = Color3.fromRGB(50, 255, 50)
+        QuestBtn.Text = "Авто-Квест: ON"
+    else
+        QuestBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        QuestBtn.Text = "Авто-Квест: OFF"
+    end
+end)
+
+FarmBtn.MouseButton1Click:Connect(function()
+    Flags.AutoFarm = not Flags.AutoFarm
+    if Flags.AutoFarm then
+        FarmBtn.BackgroundColor3 = Color3.fromRGB(50, 255, 50)
+        FarmBtn.Text = "Воздух-Фарм: ON"
+    else
+        FarmBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        FarmBtn.Text = "Воздух-Фарм: OFF"
+    end
+end)
 
 -- ==========================================
--- 1. АВТОКВЕСТ
+-- 2. ЛОГИКА ФАРМА И КВЕСТОВ
 -- ==========================================
 local function AutoTakeQuest()
     pcall(function()
@@ -53,13 +104,9 @@ local function AutoTakeQuest()
     end)
 end
 
--- ==========================================
--- 2. БОЕВОЙ ЦИКЛ (С ОБХОДОМ SAFE ZONE)
--- ==========================================
 local function GetNearestEnemy()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-    
     local nearest = nil
     local minDist = math.huge
     local enemies = Workspace:FindFirstChild("Enemies")
@@ -98,7 +145,6 @@ task.spawn(function()
             if mainTarget then
                 local targetHrp = mainTarget:FindFirstChild("HumanoidRootPart")
                 if targetHrp then
-                    -- Вылетаем из Safe Zone к мобу
                     if not farmPosition then
                         farmPosition = targetHrp.CFrame * CFrame.new(0, Flags.SafeHeight, 0)
                     end
@@ -106,7 +152,6 @@ task.spawn(function()
                     hrp.CFrame = farmPosition
                     hrp.Velocity = Vector3.new(0, 0, 0)
 
-                    -- Стягиваем остальных
                     local enemies = Workspace:FindFirstChild("Enemies")
                     if enemies then
                         for _, enemy in pairs(enemies:GetChildren()) do
@@ -117,7 +162,6 @@ task.spawn(function()
                                     eHrp.CFrame = hrp.CFrame * CFrame.new(0, -7, -3)
                                     eHrp.Velocity = Vector3.new(0, 0, 0)
                                     eHrp.CanCollide = false
-                                    
                                     eHum.WalkSpeed = 0
                                     eHum.JumpPower = 0
                                     eHum.Sit = true 
@@ -126,7 +170,6 @@ task.spawn(function()
                         end
                     end
                     
-                    -- Достаем оружие
                     local tool = char:FindFirstChildOfClass("Tool")
                     if not tool then
                         for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
@@ -137,7 +180,6 @@ task.spawn(function()
                         end
                     end
                     
-                    -- Атака
                     if tool then 
                         tool:Activate()
                         VirtualUser:CaptureController()
@@ -152,26 +194,3 @@ task.spawn(function()
         end
     end
 end)
-
--- ==========================================
--- ИНТЕРФЕЙС
--- ==========================================
-
-FarmTab:AddToggle({
-    Name = "1. Авто-Квест (Ближайший)",
-    Default = false,
-    Callback = function(Value)
-        Flags.AutoQuest = Value
-    end    
-})
-
-FarmTab:AddToggle({
-    Name = "2. Воздух + Стяжка + Автоатака",
-    Default = false,
-    Callback = function(Value)
-        Flags.AutoFarm = Value
-    end    
-})
-
--- Инициализация Orion
-OrionLib:Init()
