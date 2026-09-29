@@ -1,4 +1,8 @@
-if not game:IsLoaded() then game.Loaded:Wait() end
+print("[Higut Hub] 1/5 Запуск скрипта...")
+if not game:IsLoaded() then 
+    game.Loaded:Wait() 
+end
+print("[Higut Hub] 2/5 Игра загружена. Сбор сервисов...")
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -13,12 +17,23 @@ local Flags = {
     SafeHeight = 35
 }
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+print("[Higut Hub] 3/5 Скачивание меню Rayfield...")
+-- Используем прямую RAW-ссылку, она работает даже на слабых экзекуторах
+local success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexsoftware/Rayfield/main/source'))()
+end)
+
+if not success or not Rayfield then
+    warn("[Higut Hub] КРИТИЧЕСКАЯ ОШИБКА: Экзекутор не смог скачать меню. Ошибка: ", tostring(Rayfield))
+    return -- Останавливаем скрипт, чтобы не было лагов
+end
+
+print("[Higut Hub] 4/5 Отрисовка окон...")
 
 local Window = Rayfield:CreateWindow({
    Name = "Higut Hub PRO MAX | Blox Fruits",
    LoadingTitle = "Загрузка модулей...",
-   LoadingSubtitle = "Версия для босса - Исправленная + ESP",
+   LoadingSubtitle = "Версия для босса - Debug Edition",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
 })
@@ -34,7 +49,7 @@ local function HasActiveQuest()
     if gui and gui:FindFirstChild("Main") then
         local questUI = gui.Main:FindFirstChild("Quest")
         if questUI and questUI.Visible then
-            return true -- Квест уже выполняется
+            return true 
         end
     end
     return false
@@ -48,20 +63,24 @@ local function AutoTakeQuest()
         if remotes and remotes:FindFirstChild("CommF_") then
             local nearestNPC = nil
             local minDist = 500
-            for _, npc in pairs(Workspace.NPCs:GetChildren()) do
-                if string.find(npc.Name, "Quest") then
-                    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                        local dist = (LocalPlayer.Character.HumanoidRootPart.Position - npc.WorldPivot.Position).Magnitude
-                        if dist < minDist then
-                            minDist = dist
-                            nearestNPC = npc
+            local npcsFolder = Workspace:FindFirstChild("NPCs")
+            
+            if npcsFolder then
+                for _, npc in pairs(npcsFolder:GetChildren()) do
+                    if string.find(npc.Name, "Quest") then
+                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                            local dist = (LocalPlayer.Character.HumanoidRootPart.Position - npc.WorldPivot.Position).Magnitude
+                            if dist < minDist then
+                                minDist = dist
+                                nearestNPC = npc
+                            end
                         end
                     end
                 end
-            end
-            if nearestNPC then
-                remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1) 
-                remotes.CommF_:InvokeServer("StartQuest", "MarineQuest", 1)
+                if nearestNPC then
+                    remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1) 
+                    remotes.CommF_:InvokeServer("StartQuest", "MarineQuest", 1)
+                end
             end
         end
     end)
@@ -149,7 +168,7 @@ task.spawn(function()
                     end
                     
                     if tool then 
-                        tool:Activate()
+                        pcall(function() tool:Activate() end)
                     end
                 end
             else
@@ -169,7 +188,6 @@ local function CreateESP(enemy)
     local hrp = enemy:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
     
-    -- Подсветка силуэта
     local hl = Instance.new("Highlight")
     hl.Name = "HigutESP"
     hl.FillColor = Color3.fromRGB(255, 50, 50)
@@ -180,7 +198,6 @@ local function CreateESP(enemy)
     hl.Adornee = enemy
     hl.Parent = enemy
     
-    -- Имя над головой
     local bgui = Instance.new("BillboardGui")
     bgui.Name = "HigutTextESP"
     bgui.Adornee = hrp
@@ -211,7 +228,6 @@ task.spawn(function()
             for _, enemy in pairs(enemies:GetChildren()) do
                 if Flags.ESP then
                     local hum = enemy:FindFirstChild("Humanoid")
-                    -- Показываем ESP только если моб жив
                     if hum and hum.Health > 0 then
                         CreateESP(enemy)
                     else
@@ -256,9 +272,8 @@ task.spawn(function()
 end)
 
 -- ==========================================
--- ИНТЕРФЕЙС
+-- ИНТЕРФЕЙС (ДОБАВЛЕНИЕ КНОПОК)
 -- ==========================================
-
 FarmTab:CreateToggle({
    Name = "1. Авто-Квест (Выполняет до конца)",
    CurrentValue = false,
@@ -269,7 +284,7 @@ FarmTab:CreateToggle({
 })
 
 FarmTab:CreateToggle({
-   Name = "2. Воздух + Стяжка + Удары (Без кликера)",
+   Name = "2. Воздух + Стяжка + Удары",
    CurrentValue = false,
    Flag = "Toggle_AutoFarm",
    Callback = function(Value)
@@ -295,4 +310,5 @@ VisualTab:CreateToggle({
    end,
 })
 
+print("[Higut Hub] 5/5 Успех! Загрузка конфигурации Rayfield...")
 Rayfield:LoadConfiguration()
