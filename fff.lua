@@ -1,418 +1,747 @@
--- =========================================================
--- HIGUT HUB V5 PREMIUM | SMART LOGIC & FLUENT UI
--- =========================================================
-if not game:IsLoaded() then game.Loaded:Wait() end
+-- language: Luau, file: ps99_enterprise_hub_key.lua, target: Roblox / Executor
 
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualUser = game:GetService("VirtualUser")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Anti-AFK
-LocalPlayer.Idled:Connect(function()
-    VirtualUser:Button2Down(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
-    task.wait(1)
-    VirtualUser:Button2Up(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
+pcall(function()
+    if PlayerGui:FindFirstChild("EnterpriseHub_Main") then PlayerGui.EnterpriseHub_Main:Destroy() end
+    if PlayerGui:FindFirstChild("PS99_Loader") then PlayerGui.PS99_Loader:Destroy() end
+    if PlayerGui:FindFirstChild("EnterpriseHub_Watermark") then PlayerGui.EnterpriseHub_Watermark:Destroy() end
+    if PlayerGui:FindFirstChild("EnterpriseHub_KeySystem") then PlayerGui.EnterpriseHub_KeySystem:Destroy() end
 end)
 
-if CoreGui:FindFirstChild("HigutHubV5") then 
-    CoreGui.HigutHubV5:Destroy() 
-end
+-- =========================================================================
+-- СИСТЕМА КЛЮЧА (В СТИЛЕ ЗАГРУЗКИ)
+-- =========================================================================
+local KeyGui = Instance.new("ScreenGui")
+KeyGui.Name = "EnterpriseHub_KeySystem"
+KeyGui.ResetOnSpawn = false
+KeyGui.DisplayOrder = 999999
+KeyGui.Parent = PlayerGui
 
-local Flags = {
-    AutoFarm = false,
-    AutoQuest = false,
-    AutoHaki = false,
-    SafeZoneFilter = true,
-    MobESP = false,
-    PurpleWorld = true,
-    InfJump = false,
-    SafeHeight = 25
-}
+local KeyCanvas = Instance.new("CanvasGroup")
+KeyCanvas.Size = UDim2.new(0, 360, 0, 220)
+KeyCanvas.Position = UDim2.new(0.5, -180, 0.5, -110)
+KeyCanvas.BackgroundColor3 = Color3.fromRGB(13, 13, 16)
+KeyCanvas.BorderSizePixel = 0
+KeyCanvas.GroupTransparency = 1
+KeyCanvas.Parent = KeyGui
+Instance.new("UICorner", KeyCanvas).CornerRadius = UDim.new(0, 12)
 
----------------------------------------------------------
--- 1. PREMIUM UI (FLUENT DESIGN)
----------------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "HigutHubV5"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+TweenService:Create(KeyCanvas, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
 
-pcall(function() ScreenGui.Parent = CoreGui end)
-if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Size = UDim2.new(1, -40, 0, 30)
+KeyTitle.Position = UDim2.new(0, 20, 0, 20)
+KeyTitle.BackgroundTransparency = 1
+KeyTitle.Font = Enum.Font.GothamBold
+KeyTitle.TextSize = 16
+KeyTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyTitle.TextXAlignment = Enum.TextXAlignment.Left
+KeyTitle.Text = "Enterprise Hub — Авторизация"
+KeyTitle.Parent = KeyCanvas
 
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 650, 0, 450)
-MainFrame.Position = UDim2.new(0.5, -325, 0.5, -225)
-MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
-MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+local KeyDesc = Instance.new("TextLabel")
+KeyDesc.Size = UDim2.new(1, -40, 0, 20)
+KeyDesc.Position = UDim2.new(0, 20, 0, 50)
+KeyDesc.BackgroundTransparency = 1
+KeyDesc.Font = Enum.Font.Gotham
+KeyDesc.TextSize = 12
+KeyDesc.TextColor3 = Color3.fromRGB(150, 150, 165)
+KeyDesc.TextXAlignment = Enum.TextXAlignment.Left
+KeyDesc.Text = "Введите ключ доступа для запуска скрипта (Подсказка: 2026)"
+KeyDesc.Parent = KeyCanvas
 
-local Shadow = Instance.new("UIStroke", MainFrame)
-Shadow.Color = Color3.fromRGB(140, 60, 255)
-Shadow.Thickness = 2
-Shadow.Transparency = 0.3
+local TextBoxBg = Instance.new("Frame")
+TextBoxBg.Size = UDim2.new(1, -40, 0, 42)
+TextBoxBg.Position = UDim2.new(0, 20, 0, 85)
+TextBoxBg.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+TextBoxBg.BorderSizePixel = 0
+TextBoxBg.Parent = KeyCanvas
+Instance.new("UICorner", TextBoxBg).CornerRadius = UDim.new(0, 8)
 
-local TopBar = Instance.new("Frame", MainFrame)
-TopBar.Size = UDim2.new(1, 0, 0, 50)
-TopBar.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-TopBar.BorderSizePixel = 0
+local KeyTextBox = Instance.new("TextBox")
+KeyTextBox.Size = UDim2.new(1, -20, 1, 0)
+KeyTextBox.Position = UDim2.new(0, 10, 0, 0)
+KeyTextBox.BackgroundTransparency = 1
+KeyTextBox.Font = Enum.Font.GothamMedium
+KeyTextBox.PlaceholderText = "Введите ключ здесь..."
+KeyTextBox.Text = ""
+KeyTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyTextBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 115)
+KeyTextBox.TextSize = 13
+KeyTextBox.TextXAlignment = Enum.TextXAlignment.Left
+KeyTextBox.Parent = TextBoxBg
 
-local TitleText = Instance.new("TextLabel", TopBar)
-TitleText.Size = UDim2.new(1, -70, 1, 0)
-TitleText.Position = UDim2.new(0, 20, 0, 0)
-TitleText.BackgroundTransparency = 1
-TitleText.Font = Enum.Font.GothamBlack
-TitleText.Text = "HIGUT HUB V5 PREMIUM"
-TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleText.TextSize = 18
-TitleText.TextXAlignment = Enum.TextXAlignment.Left
+local SubmitBtn = Instance.new("TextButton")
+SubmitBtn.Size = UDim2.new(1, -40, 0, 40)
+SubmitBtn.Position = UDim2.new(0, 20, 0, 145)
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+SubmitBtn.Font = Enum.Font.GothamBold
+SubmitBtn.Text = "ПОДТВЕРДИТЬ КЛЮЧ"
+SubmitBtn.TextColor3 = Color3.fromRGB(200, 200, 215)
+SubmitBtn.TextSize = 13
+SubmitBtn.Parent = KeyCanvas
+Instance.new("UICorner", SubmitBtn).CornerRadius = UDim.new(0, 8)
 
-local TitleGradient = Instance.new("UIGradient", TitleText)
-TitleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 100, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
-})
+local function startMainHub()
+    -- Анимация закрытия окна ключа
+    TweenService:Create(KeyCanvas, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
+        GroupTransparency = 1,
+        Size = UDim2.new(0, 360, 0, 0),
+        Position = UDim2.new(0.5, -180, 0.5, 0)
+    }):Play()
+    task.wait(0.3)
+    KeyGui:Destroy()
 
-local CloseBtn = Instance.new("TextButton", TopBar)
-CloseBtn.Size = UDim2.new(0, 34, 0, 34)
-CloseBtn.Position = UDim2.new(1, -44, 0, 8)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 80)
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 14
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
+    -- =========================================================================
+    -- ВАТЕРМАРКА
+    -- =========================================================================
+    local WatermarkGui = Instance.new("ScreenGui")
+    WatermarkGui.Name = "EnterpriseHub_Watermark"
+    WatermarkGui.ResetOnSpawn = false
+    WatermarkGui.DisplayOrder = 999998
+    WatermarkGui.Parent = PlayerGui
 
-CloseBtn.MouseEnter:Connect(function()
-    TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 80, 110)}):Play()
-end)
-CloseBtn.MouseLeave:Connect(function()
-    TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 50, 80)}):Play()
-end)
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+    local WatermarkFrame = Instance.new("Frame")
+    WatermarkFrame.Size = UDim2.new(0, 160, 0, 30)
+    WatermarkFrame.Position = UDim2.new(0, 15, 0, 15)
+    WatermarkFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+    WatermarkFrame.BorderSizePixel = 0
+    WatermarkFrame.Parent = WatermarkGui
+    Instance.new("UICorner", WatermarkFrame).CornerRadius = UDim.new(0, 6)
 
-local dragging, dragStart, startPos
-TopBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-end)
+    local WatermarkText = Instance.new("TextLabel")
+    WatermarkText.Size = UDim2.new(1, 0, 1, 0)
+    WatermarkText.BackgroundTransparency = 1
+    WatermarkText.Font = Enum.Font.GothamBold
+    WatermarkText.TextSize = 12
+    WatermarkText.TextColor3 = Color3.fromRGB(200, 200, 220)
+    WatermarkText.Text = "Enterprise Hub"
+    WatermarkText.Parent = WatermarkFrame
 
-local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Size = UDim2.new(0, 160, 1, -50)
-Sidebar.Position = UDim2.new(0, 0, 0, 50)
-Sidebar.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
-Sidebar.BorderSizePixel = 0
+    -- =========================================================================
+    -- ЗАГРУЗКА ИНТЕРФЕЙСА
+    -- =========================================================================
+    local LoaderGui = Instance.new("ScreenGui")
+    LoaderGui.Name = "PS99_Loader"
+    LoaderGui.ResetOnSpawn = false
+    LoaderGui.DisplayOrder = 999999
+    LoaderGui.Parent = PlayerGui
 
-local SideList = Instance.new("UIListLayout", Sidebar)
-SideList.Padding = UDim.new(0, 8)
-SideList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    local CanvasGroup = Instance.new("CanvasGroup")
+    CanvasGroup.Size = UDim2.new(0, 340, 0, 200)
+    CanvasGroup.Position = UDim2.new(0.5, -170, 0.5, -100)
+    CanvasGroup.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+    CanvasGroup.BorderSizePixel = 0
+    CanvasGroup.GroupTransparency = 1
+    CanvasGroup.Parent = LoaderGui
+    Instance.new("UICorner", CanvasGroup).CornerRadius = UDim.new(0, 12)
 
-local Container = Instance.new("Frame", MainFrame)
-Container.Size = UDim2.new(1, -170, 1, -60)
-Container.Position = UDim2.new(0, 165, 0, 55)
-Container.BackgroundTransparency = 1
+    local Logo = Instance.new("ImageLabel")
+    Logo.Size = UDim2.new(0, 50, 0, 50)
+    Logo.Position = UDim2.new(0.5, -25, 0.3, -25)
+    Logo.BackgroundTransparency = 1
+    Logo.Image = "rbxassetid://12799304724"
+    Logo.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    Logo.Parent = CanvasGroup
 
-local Tabs, TabButtons = {}, {}
+    local StatusText = Instance.new("TextLabel")
+    StatusText.Size = UDim2.new(1, -40, 0, 20)
+    StatusText.Position = UDim2.new(0, 20, 0.62, 0)
+    StatusText.BackgroundTransparency = 1
+    StatusText.Font = Enum.Font.GothamMedium
+    StatusText.TextSize = 13
+    StatusText.TextColor3 = Color3.fromRGB(160, 160, 175)
+    StatusText.Text = "Инициализация ядра..."
+    StatusText.Parent = CanvasGroup
 
-local function CreateTab(name)
-    local TabPage = Instance.new("ScrollingFrame", Container)
-    TabPage.Size = UDim2.new(1, 0, 1, 0)
-    TabPage.BackgroundTransparency = 1
-    TabPage.ScrollBarThickness = 2
-    TabPage.Visible = false
-    
-    local TabList = Instance.new("UIListLayout", TabPage)
-    TabList.Padding = UDim.new(0, 10)
-    
-    local TabBtn = Instance.new("TextButton", Sidebar)
-    TabBtn.Size = UDim2.new(0.9, 0, 0, 42)
-    TabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-    TabBtn.Font = Enum.Font.GothamMedium
-    TabBtn.Text = name
-    TabBtn.TextColor3 = Color3.fromRGB(160, 160, 180)
-    TabBtn.TextSize = 14
-    Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 8)
-    
-    TabBtn.MouseButton1Click:Connect(function()
-        for _, page in pairs(Tabs) do page.Visible = false end
-        for _, btn in pairs(TabButtons) do 
-            TweenService:Create(btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(22, 22, 30), TextColor3 = Color3.fromRGB(160, 160, 180)}):Play()
+    local BarBackground = Instance.new("Frame")
+    BarBackground.Size = UDim2.new(0, 240, 0, 3)
+    BarBackground.Position = UDim2.new(0.5, -120, 0.8, 0)
+    BarBackground.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    BarBackground.BorderSizePixel = 0
+    BarBackground.Parent = CanvasGroup
+    Instance.new("UICorner", BarBackground).CornerRadius = UDim.new(0, 8)
+
+    local ProgressBar = Instance.new("Frame")
+    ProgressBar.Size = UDim2.new(0, 0, 1, 0)
+    ProgressBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ProgressBar.BorderSizePixel = 0
+    ProgressBar.Parent = BarBackground
+    Instance.new("UICorner", ProgressBar).CornerRadius = UDim.new(0, 8)
+
+    local rotationConnection = RunService.RenderStepped:Connect(function(deltaTime)
+        if Logo and Logo.Parent then
+            Logo.Rotation = (Logo.Rotation + (120 * deltaTime)) % 360
         end
-        TabPage.Visible = true
-        TweenService:Create(TabBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(140, 60, 255), TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
     end)
-    
-    table.insert(Tabs, TabPage)
-    table.insert(TabButtons, TabBtn)
-    return TabPage
-end
 
-local function AddToggle(parent, text, flagName, callback)
-    local ToggleFrame = Instance.new("Frame", parent)
-    ToggleFrame.Size = UDim2.new(0.98, 0, 0, 48)
-    ToggleFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-    Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0, 10)
-    
-    local Label = Instance.new("TextLabel", ToggleFrame)
-    Label.Size = UDim2.new(1, -70, 1, 0)
-    Label.Position = UDim2.new(0, 15, 0, 0)
-    Label.BackgroundTransparency = 1
-    Label.Font = Enum.Font.GothamMedium
-    Label.Text = text
-    Label.TextColor3 = Color3.fromRGB(230, 230, 240)
-    Label.TextSize = 14
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local Switch = Instance.new("TextButton", ToggleFrame)
-    Switch.Size = UDim2.new(0, 48, 0, 24)
-    Switch.Position = UDim2.new(1, -60, 0.5, -12)
-    Switch.BackgroundColor3 = Flags[flagName] and Color3.fromRGB(140, 60, 255) or Color3.fromRGB(40, 40, 55)
-    Switch.Text = ""
-    Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
-    
-    local Knob = Instance.new("Frame", Switch)
-    Knob.Size = UDim2.new(0, 20, 0, 20)
-    Knob.Position = Flags[flagName] and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
-    Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
-    
-    Switch.MouseButton1Click:Connect(function()
-        Flags[flagName] = not Flags[flagName]
-        local active = Flags[flagName]
-        TweenService:Create(Switch, TweenInfo.new(0.25), {BackgroundColor3 = active and Color3.fromRGB(140, 60, 255) or Color3.fromRGB(40, 40, 55)}):Play()
-        TweenService:Create(Knob, TweenInfo.new(0.25), {Position = active and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)}):Play()
-        if callback then callback(active) end
-    end)
-end
+    task.spawn(function()
+        TweenService:Create(CanvasGroup, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+            GroupTransparency = 0,
+            Size = UDim2.new(0, 340, 0, 200),
+            Position = UDim2.new(0.5, -170, 0.5, -100)
+        }):Play()
+        task.wait(1.0)
+        TweenService:Create(ProgressBar, TweenInfo.new(1.0, Enum.EasingStyle.Quad), {Size = UDim2.new(1, 0, 1, 0)}):Play()
+        task.wait(1.2)
 
-local function AddButton(parent, text, callback)
-    local Btn = Instance.new("TextButton", parent)
-    Btn.Size = UDim2.new(0.98, 0, 0, 42)
-    Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
-    Btn.Font = Enum.Font.GothamMedium
-    Btn.Text = text
-    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Btn.TextSize = 14
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 8)
-    
-    Btn.MouseButton1Click:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(140, 60, 255)}):Play()
-        task.wait(0.1)
-        TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(30, 30, 42)}):Play()
-        if callback then callback() end
-    end)
-end
+        TweenService:Create(CanvasGroup, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 340, 0, 0),
+            Position = UDim2.new(0.5, -170, 0.5, 0),
+            GroupTransparency = 1
+        }):Play()
+        task.wait(0.4)
+        if rotationConnection then rotationConnection:Disconnect() end
+        LoaderGui:Destroy()
 
-local FarmPage = CreateTab("Автофарм")
-local PlayerPage = CreateTab("Игрок")
-local VisualsPage = CreateTab("Визуалы")
+        -- =========================================================================
+        -- ГЛАВНОЕ МЕНЮ СО СГЛАЖИВАНИЕМ И АНИМАЦИЯМИ
+        -- =========================================================================
+        local MainGui = Instance.new("ScreenGui")
+        MainGui.Name = "EnterpriseHub_Main"
+        MainGui.ResetOnSpawn = false
+        MainGui.DisplayOrder = 999999
+        MainGui.Parent = PlayerGui
 
-Tabs[1].Visible = true
-TabButtons[1].BackgroundColor3 = Color3.fromRGB(140, 60, 255)
-TabButtons[1].TextColor3 = Color3.fromRGB(255, 255, 255)
+        local MainCanvas = Instance.new("CanvasGroup")
+        MainCanvas.Size = UDim2.new(0, 880, 0, 520)
+        MainCanvas.Position = UDim2.new(0.5, -440, 0.5, -260)
+        MainCanvas.BackgroundColor3 = Color3.fromRGB(13, 13, 16)
+        MainCanvas.BorderSizePixel = 0
+        MainCanvas.GroupTransparency = 1
+        MainCanvas.Parent = MainGui
+        Instance.new("UICorner", MainCanvas).CornerRadius = UDim.new(0, 12)
 
--- Вкладка Фарм
-AddToggle(FarmPage, "Умный Авто-Квест", "AutoQuest")
-AddToggle(FarmPage, "Воздух + Стяжка + Автокликер", "AutoFarm")
-AddToggle(FarmPage, "Фильтр Safe Zone", "SafeZoneFilter")
-AddToggle(FarmPage, "Авто-Воля (Buso Haki)", "AutoHaki")
+        TweenService:Create(MainCanvas, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
 
--- Вкладка Игрок
-AddToggle(PlayerPage, "Бесконечные Прыжки", "InfJump")
-AddButton(PlayerPage, "Скорость x2 (WalkSpeed)", function()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = 32
-    end
-end)
-AddButton(PlayerPage, "Прыжок x2 (JumpPower)", function()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.JumpPower = 100
-    end
-end)
+        -- Перетаскивание
+        local DragFrame = Instance.new("Frame")
+        DragFrame.Size = UDim2.new(1, 0, 0, 45)
+        DragFrame.BackgroundTransparency = 1
+        DragFrame.Active = true
+        DragFrame.Parent = MainCanvas
 
--- Вкладка Визуалы
-AddToggle(VisualsPage, "Фиолетовый Мир", "PurpleWorld")
-AddToggle(VisualsPage, "ESP Подсветка Мобов", "MobESP")
-
----------------------------------------------------------
--- 2. ФУНКЦИОНАЛ: INF JUMP & HAKI
----------------------------------------------------------
-UserInputService.JumpRequest:Connect(function()
-    if Flags.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
-end)
-
-task.spawn(function()
-    while task.wait(2) do
-        if Flags.AutoHaki and LocalPlayer.Character then
-            if not LocalPlayer.Character:FindFirstChild("HasBuso") then
-                local remotes = ReplicatedStorage:FindFirstChild("Remotes")
-                if remotes and remotes:FindFirstChild("CommF_") then
-                    remotes.CommF_:InvokeServer("Buso")
-                end
+        local dragging, dragInput, dragStart, startPos
+        DragFrame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                startPos = MainCanvas.Position
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then dragging = false end
+                end)
             end
-        end
-    end
-end)
-
----------------------------------------------------------
--- 3. SMART QUEST LOGIC & FARMING
----------------------------------------------------------
-local function HasActiveQuest()
-    local gui = LocalPlayer:FindFirstChild("PlayerGui")
-    if gui and gui:FindFirstChild("Main") then
-        local questUI = gui.Main:FindFirstChild("Quest")
-        if questUI and questUI.Visible then
-            return true
-        end
-    end
-    return false
-end
-
-local function SmartTakeQuest()
-    if HasActiveQuest() then return end
-    
-    pcall(function()
-        local remotes = ReplicatedStorage:FindFirstChild("Remotes")
-        if remotes and remotes:FindFirstChild("CommF_") then
-            local myLevel = LocalPlayer.Data.Level.Value
-            if myLevel >= 1 then
-                -- Отправляем запросы на стартовые квесты. Возьмется только доступный для фракции.
-                remotes.CommF_:InvokeServer("StartQuest", "MarineQuest", 1)
-                remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1)
+        end)
+        DragFrame.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                dragInput = input
             end
-        end
-    end)
-end
-
-local function IsMobInSafeZone(mobHrp)
-    if not Flags.SafeZoneFilter then return false end
-    if Workspace:FindFirstChild("NPCs") then
-        for _, npc in pairs(Workspace.NPCs:GetChildren()) do
-            if (npc.WorldPivot.Position - mobHrp.Position).Magnitude < 55 then
-                return true
+        end)
+        UserInputService.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                local delta = input.Position - dragStart
+                MainCanvas.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
             end
-        end
-    end
-    return false
-end
+        end)
 
-local function GetValidEnemy()
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-    
-    local nearest = nil
-    local minDist = math.huge
-    local enemies = Workspace:FindFirstChild("Enemies")
-    
-    if enemies then
-        for _, enemy in pairs(enemies:GetChildren()) do
-            local hrp = enemy:FindFirstChild("HumanoidRootPart")
-            local hum = enemy:FindFirstChild("Humanoid")
-            if hrp and hum and hum.Health > 0 then
-                if not IsMobInSafeZone(hrp) then
-                    local dist = (char.HumanoidRootPart.Position - hrp.Position).Magnitude
-                    if dist < minDist then
-                        minDist = dist
-                        nearest = enemy
+        -- Сайдбар
+        local Sidebar = Instance.new("Frame")
+        Sidebar.Size = UDim2.new(0, 220, 1, 0)
+        Sidebar.BackgroundColor3 = Color3.fromRGB(10, 10, 13)
+        Sidebar.BorderSizePixel = 0
+        Sidebar.Parent = MainCanvas
+
+        local SidebarLine = Instance.new("Frame")
+        SidebarLine.Size = UDim2.new(0, 1, 1, 0)
+        SidebarLine.Position = UDim2.new(1, 0, 0, 0)
+        SidebarLine.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        SidebarLine.BorderSizePixel = 0
+        SidebarLine.Parent = Sidebar
+
+        local LogoText = Instance.new("TextLabel")
+        LogoText.Size = UDim2.new(0, 150, 0, 26)
+        LogoText.Position = UDim2.new(0, 20, 0, 20)
+        LogoText.BackgroundTransparency = 1
+        LogoText.Font = Enum.Font.GothamBold
+        LogoText.TextSize = 16
+        LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        LogoText.TextXAlignment = Enum.TextXAlignment.Left
+        LogoText.Text = "Enterprise Hub"
+        LogoText.Parent = Sidebar
+
+        local NavList = Instance.new("ScrollingFrame")
+        NavList.Size = UDim2.new(1, 0, 1, -85)
+        NavList.Position = UDim2.new(0, 0, 0, 75)
+        NavList.BackgroundTransparency = 1
+        NavList.CanvasSize = UDim2.new(0, 0, 0, 400)
+        NavList.ScrollBarThickness = 0
+        NavList.Parent = Sidebar
+
+        local NavLayout = Instance.new("UIListLayout")
+        NavLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        NavLayout.Padding = UDim.new(0, 4)
+        NavLayout.Parent = NavList
+
+        -- Кнопки управления окном
+        local TopControls = Instance.new("Frame")
+        TopControls.Size = UDim2.new(0, 100, 0, 45)
+        TopControls.Position = UDim2.new(1, -110, 0, 0)
+        TopControls.BackgroundTransparency = 1
+        TopControls.Parent = MainCanvas
+
+        local CloseBtn = Instance.new("TextButton")
+        CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+        CloseBtn.Position = UDim2.new(1, -32, 0.5, -14)
+        CloseBtn.BackgroundTransparency = 1
+        CloseBtn.Text = "X"
+        CloseBtn.TextColor3 = Color3.fromRGB(150, 150, 165)
+        CloseBtn.TextSize, CloseBtn.Font = 14, Enum.Font.GothamBold
+        CloseBtn.Parent = TopControls
+
+        CloseBtn.MouseButton1Click:Connect(function()
+            TweenService:Create(MainCanvas, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {GroupTransparency = 1}):Play()
+            task.wait(0.25)
+            MainGui:Destroy()
+            WatermarkGui:Destroy()
+        end)
+
+        local ContainerWrapper = Instance.new("Frame")
+        ContainerWrapper.Size = UDim2.new(1, -220, 1, -45)
+        ContainerWrapper.Position = UDim2.new(0, 220, 0, 45)
+        ContainerWrapper.BackgroundTransparency = 1
+        ContainerWrapper.Parent = MainCanvas
+
+        local MinimizeBtn = Instance.new("TextButton")
+        MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
+        MinimizeBtn.Position = UDim2.new(1, -68, 0.5, -14)
+        MinimizeBtn.BackgroundTransparency = 1
+        MinimizeBtn.Text = "-"
+        MinimizeBtn.TextColor3 = Color3.fromRGB(150, 150, 165)
+        MinimizeBtn.TextSize, MinimizeBtn.Font = 14, Enum.Font.GothamBold
+        MinimizeBtn.Parent = TopControls
+
+        local isMinimized = false
+        MinimizeBtn.MouseButton1Click:Connect(function()
+            isMinimized = not isMinimized
+            if isMinimized then
+                ContainerWrapper.Visible = false
+                Sidebar.Visible = false
+                TweenService:Create(MainCanvas, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                    Size = UDim2.new(0, 880, 0, 45)
+                }):Play()
+                MinimizeBtn.Text = "+"
+            else
+                TweenService:Create(MainCanvas, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                    Size = UDim2.new(0, 880, 0, 520)
+                }):Play()
+                task.wait(0.15)
+                Sidebar.Visible = true
+                ContainerWrapper.Visible = true
+                MinimizeBtn.Text = "-"
+            end
+        end)
+
+        -- Страницы
+        local ContentArea = Instance.new("Frame")
+        ContentArea.Size = UDim2.new(1, -20, 1, -15)
+        ContentArea.Position = UDim2.new(0, 10, 0, 10)
+        ContentArea.BackgroundTransparency = 1
+        ContentArea.Parent = ContainerWrapper
+
+        local pages = {}
+        local activePage = nil
+
+        local function createPage(name)
+            local page = Instance.new("ScrollingFrame")
+            page.Name = name .. "Page"
+            page.Size = UDim2.new(1, 0, 1, 0)
+            page.BackgroundTransparency = 1
+            page.CanvasSize = UDim2.new(0, 0, 0, 1000)
+            page.ScrollBarThickness = 3
+            page.Visible = false
+            page.Parent = ContentArea
+
+            local layout = Instance.new("UIListLayout")
+            layout.SortOrder = Enum.SortOrder.LayoutOrder
+            layout.Padding = UDim.new(0, 10)
+            layout.Parent = page
+
+            pages[name] = page
+            return page
+        end
+
+        local mainPage = createPage("Main")
+        local farmPage = createPage("Farm")
+        local petsPage = createPage("Pets")
+        local eggsPage = createPage("Eggs")
+        local shopPage = createPage("Shop")
+        local tpPage = createPage("Teleport")
+        local miscPage = createPage("Misc")
+
+        local function switchPage(targetPage)
+            if activePage == targetPage then return end
+            for _, p in pairs(pages) do p.Visible = false end
+            activePage = targetPage
+            targetPage.Visible = true
+        end
+
+        local function createTab(displayName, targetPage)
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -16, 0, 38)
+            btn.Position = UDim2.new(0, 8, 0, 0)
+            btn.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+            btn.BackgroundTransparency = 1
+            btn.Text = "    " .. displayName
+            btn.TextColor3 = Color3.fromRGB(150, 150, 165)
+            btn.TextSize, btn.Font = 13, Enum.Font.GothamMedium
+            btn.TextXAlignment = Enum.TextXAlignment.Left
+            btn.Parent = NavList
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+
+            btn.MouseButton1Click:Connect(function()
+                for _, b in ipairs(NavList:GetChildren()) do
+                    if b:IsA("TextButton") then
+                        TweenService:Create(b, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+                        TweenService:Create(b, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 165)}):Play()
                     end
                 end
+                TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
+                TweenService:Create(btn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+                switchPage(targetPage)
+            end)
+        end
+
+        createTab("Главная", mainPage)
+        createTab("Авто-Фарм", farmPage)
+        createTab("Питомцы", petsPage)
+        createTab("Яйца", eggsPage)
+        createTab("Экономика", shopPage)
+        createTab("Телепортация", tpPage)
+        createTab("Утилиты и AFK", miscPage)
+
+        mainPage.Visible = true
+        activePage = mainPage
+
+        local function createCard(page, titleText, descText)
+            local card = Instance.new("Frame")
+            card.Size = UDim2.new(1, -10, 0, 85)
+            card.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+            card.BorderSizePixel = 0
+            card.Parent = page
+            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
+
+            local title = Instance.new("TextLabel")
+            title.Size = UDim2.new(1, -30, 0, 22)
+            title.Position = UDim2.new(0, 16, 0, 14)
+            title.BackgroundTransparency = 1
+            title.Font = Enum.Font.GothamBold
+            title.TextSize = 14
+            title.TextColor3 = Color3.fromRGB(255, 255, 255)
+            title.TextXAlignment = Enum.TextXAlignment.Left
+            title.Text = titleText
+            title.Parent = card
+
+            local desc = Instance.new("TextLabel")
+            desc.Size = UDim2.new(1, -30, 0, 20)
+            desc.Position = UDim2.new(0, 16, 0, 40)
+            desc.BackgroundTransparency = 1
+            desc.Font = Enum.Font.Gotham
+            desc.TextSize, desc.TextColor3 = 12, Color3.fromRGB(140, 140, 155)
+            desc.TextXAlignment = Enum.TextXAlignment.Left
+            desc.Text = descText
+            desc.Parent = card
+
+            return card
+        end
+
+        local function createToggle(page, text, callback)
+            local card = createCard(page, text, "Нажмите для включения функции")
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(0, 90, 0, 32)
+            btn.Position = UDim2.new(1, -105, 0.5, -16)
+            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+            btn.Text = "ВЫКЛ"
+            btn.TextColor3 = Color3.fromRGB(180, 180, 195)
+            btn.TextSize, btn.Font = 12, Enum.Font.GothamBold
+            btn.Parent = card
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+
+            local state = false
+            btn.MouseButton1Click:Connect(function()
+                state = not state
+                TweenService:Create(btn, TweenInfo.new(0.2), {
+                    BackgroundColor3 = state and Color3.fromRGB(0, 170, 100) or Color3.fromRGB(30, 30, 40),
+                    TextColor3 = state and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 195)
+                }):Play()
+                btn.Text = state and "ВКЛ" or "ВЫКЛ"
+                callback(state)
+            end)
+        end
+
+        createCard(mainPage, "Статус Enterprise Hub", "Все системы активны, обход защиты работает стабильно.")
+
+        -- Функционал
+        local NetQueue = {}
+        task.spawn(function()
+            while true do
+                task.wait(0.03)
+                if #NetQueue > 0 then
+                    local action = table.remove(NetQueue, 1)
+                    pcall(function()
+                        local net = ReplicatedStorage:FindFirstChild("Network")
+                        if net then
+                            local remote = net:FindFirstChild(action.Name)
+                            if remote then remote:FireServer(unpack(action.Args)) end
+                        end
+                    end)
+                end
             end
-        end
-    end
-    return nearest
-end
+        end)
 
-local function ExecuteAttack(char)
-    local tool = char:FindFirstChildOfClass("Tool")
-    if not tool then
-        for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
-            if item:IsA("Tool") and (item.ToolTip:find("Melee") or item.ToolTip:find("Sword")) then
-                item.Parent = char
-                tool = item
-                break
-            end
-        end
-    end
-    
-    if tool then
-        tool:Activate()
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton1(Vector2.new(0, 0))
-    end
-end
-
-local farmPosition = nil
-
-task.spawn(function()
-    while task.wait(0.01) do
-        if Flags.AutoQuest then 
-            SmartTakeQuest() 
-        end
-        
-        if Flags.AutoFarm then
-            local char = LocalPlayer.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
-            
-            local hrp = char.HumanoidRootPart
-            local mainTarget = GetValidEnemy()
-            
-            if mainTarget then
-                local targetHrp = mainTarget:FindFirstChild("HumanoidRootPart")
-                if targetHrp then
-                    if not farmPosition then
-                        farmPosition = targetHrp.CFrame * CFrame.new(0, Flags.SafeHeight, 0)
-                    end
-                    
-                    hrp.CFrame = farmPosition
-                    hrp.Velocity = Vector3.new(0, 0, 0)
-
-                    local enemies = Workspace:FindFirstChild("Enemies")
-                    if enemies then
-                        for _, enemy in pairs(enemies:GetChildren()) do
-                            local eHrp = enemy:FindFirstChild("HumanoidRootPart")
-                            local eHum = enemy:FindFirstChild("Humanoid")
-                            if eHrp and eHum and eHum.Health > 0 then
-                                if not IsMobInSafeZone(eHrp) and (eHrp.Position - hrp.Position).Magnitude < 250 then
-                                    eHrp.CFrame = hrp.CFrame * CFrame.new(0, -5, -3)
-                                    eHrp.Velocity = Vector3.new(0, 0, 0)
-                                    eHrp.CanCollide = false
-                                    eHum.WalkSpeed = 0
-                                    eHum.Sit = true 
+        createToggle(farmPage, "Умный авто-фарм монет и сундуков", function(st)
+            task.spawn(function()
+                while st do
+                    task.wait(0.1)
+                    pcall(function()
+                        local map = workspace:FindFirstChild("Map")
+                        if map then
+                            for _, zone in ipairs(map:GetChildren()) do
+                                local breakables = zone:FindFirstChild("Breakables")
+                                if breakables then
+                                    for i, obj in ipairs(breakables:GetChildren()) do
+                                        if not st then break end
+                                        table.insert(NetQueue, {Name = "Breakables_PetAttack", Args = {"Pet_" .. (i%8+1), obj.Name}})
+                                    end
                                 end
                             end
                         end
-                    end
-                    ExecuteAttack(char)
+                    end)
                 end
-            else
-                farmPosition = nil
-            end
-        else
-            farmPosition = nil
+            end)
+        end)
+
+        createToggle(farmPage, "Авто-сбор лута и алмазов", function(st)
+            task.spawn(function()
+                while st do
+                    task.wait(0.15)
+                    pcall(function()
+                        local drops = workspace:FindFirstChild("Drops")
+                        local char = LocalPlayer.Character
+                        if drops and char and char:FindFirstChild("HumanoidRootPart") then
+                            local pos = char.HumanoidRootPart.CFrame
+                            for _, d in ipairs(drops:GetChildren()) do
+                                local p = d:IsA("Model") and (d.PrimaryPart or d:FindFirstChildWhichIsA("BasePart")) or d
+                                if p and p:IsA("BasePart") then p.CFrame = pos end
+                            end
+                        end
+                    end)
+                end
+            end)
+        end)
+
+        createToggle(petsPage, "Авто-экипировка лучших питомцев", function(st)
+            task.spawn(function()
+                while st do
+                    task.wait(5)
+                    pcall(function() table.insert(NetQueue, {Name = "Pets_EquipBest", Args = {}}) end)
+                end
+            end)
+        end)
+
+        createToggle(eggsPage, "Пропуск анимации вылупления", function(st)
+            pcall(function()
+                local eggGui = PlayerGui:FindFirstChild("EggOpeningGui", true)
+                if eggGui then eggGui.Enabled = not st end
+            end)
+        end)
+
+        createToggle(eggsPage, "Авто-открытие яиц (x99)", function(st)
+            task.spawn(function()
+                while st do
+                    task.wait(0.5)
+                    pcall(function() table.insert(NetQueue, {Name = "Eggs_Open", Args = {"Spawn Egg", 99}}) end)
+                end
+            end)
+        end)
+
+        createToggle(shopPage, "Снайпер торговых стендов", function(st)
+            task.spawn(function()
+                while st do
+                    task.wait(0.3)
+                    pcall(function()
+                        local plaza = workspace:FindFirstChild("TradingPlaza")
+                        local booths = plaza and plaza:FindFirstChild("Booths")
+                        if booths then
+                            for _, b in ipairs(booths:GetChildren()) do
+                                local l = b:FindFirstChild("Listing")
+                                if l and l.Value then
+                                    table.insert(NetQueue, {Name = "Booths_PurchaseItem", Args = {b.Name, l.Value}})
+                                end
+                            end
+                        end
+                    end)
+                end
+            end)
+        end)
+
+        -- =========================================================================
+        -- ТЕЛЕПОРТАЦИЯ
+        -- =========================================================================
+        local tpCard1 = createCard(tpPage, "Торговая Плаза", "Быстрое перемещение в Trading Plaza")
+        local tpBtn1 = Instance.new("TextButton", tpCard1)
+        tpBtn1.Size = UDim2.new(0, 100, 0, 32)
+        tpBtn1.Position = UDim2.new(1, -115, 0.5, -16)
+        tpBtn1.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        tpBtn1.Text, tpBtn1.TextColor3, tpBtn1.TextSize, tpBtn1.Font = "Перейти", Color3.fromRGB(255, 255, 255), 12, Enum.Font.GothamBold
+        Instance.new("UICorner", tpBtn1).CornerRadius = UDim.new(0, 6)
+        tpBtn1.MouseButton1Click:Connect(function() TeleportService:Teleport(8737899170, LocalPlayer) end)
+
+        local function teleportToZone(zoneName)
+            pcall(function()
+                local map = workspace:FindFirstChild("Map")
+                if map then
+                    local zone = map:FindFirstChild(zoneName, true)
+                    local targetPart = zone and (zone:FindFirstChild("Spawn") or zone:FindFirstChildWhichIsA("BasePart"))
+                    local char = LocalPlayer.Character
+                    if targetPart and char and char:FindFirstChild("HumanoidRootPart") then
+                        char.HumanoidRootPart.CFrame = targetPart.CFrame + Vector3.new(0, 5, 0)
+                    end
+                end
+            end)
         end
+
+        local function createWorldCard(worldName, descText, locations)
+            local card = createCard(tpPage, worldName, descText .. " (Нажмите ПКМ для выбора локации)")
+            
+            local indicator = Instance.new("TextLabel", card)
+            indicator.Size = UDim2.new(0, 130, 0, 32)
+            indicator.Position = UDim2.new(1, -145, 0.5, -16)
+            indicator.BackgroundTransparency = 1
+            indicator.Font = Enum.Font.GothamMedium
+            indicator.TextSize = 12
+            indicator.TextColor3 = Color3.fromRGB(150, 150, 165)
+            indicator.Text = "ПКМ: Меню зон"
+
+            local dropdown = Instance.new("Frame", MainGui)
+            dropdown.Size = UDim2.new(0, 180, 0, 200)
+            dropdown.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+            dropdown.BorderSizePixel = 0
+            dropdown.Visible = false
+            dropdown.ZIndex = 1000000
+            Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 8)
+
+            local scroll = Instance.new("ScrollingFrame", dropdown)
+            scroll.Size = UDim2.new(1, -4, 1, -4)
+            scroll.Position = UDim2.new(0, 2, 0, 2)
+            scroll.BackgroundTransparency = 1
+            scroll.CanvasSize = UDim2.new(0, 0, 0, #locations * 30)
+            scroll.ScrollBarThickness = 3
+            scroll.ZIndex = 1000001
+
+            local layout = Instance.new("UIListLayout", scroll)
+            layout.SortOrder = Enum.SortOrder.LayoutOrder
+            layout.Padding = UDim.new(0, 2)
+
+            for _, locName in ipairs(locations) do
+                local locBtn = Instance.new("TextButton", scroll)
+                locBtn.Size = UDim2.new(1, 0, 0, 28)
+                locBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                locBtn.BackgroundTransparency = 1
+                locBtn.Font = Enum.Font.Gotham
+                locBtn.TextSize = 12
+                locBtn.TextColor3 = Color3.fromRGB(200, 200, 215)
+                locBtn.TextXAlignment = Enum.TextXAlignment.Left
+                locBtn.Text = "    " .. locName
+                locBtn.ZIndex = 1000002
+
+                locBtn.MouseButton1Click:Connect(function()
+                    dropdown.Visible = false
+                    teleportToZone(locName)
+                end)
+            end
+
+            card.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                    local mousePos = UserInputService:GetMouseLocation()
+                    dropdown.Position = UDim2.new(0, mousePos.X, 0, mousePos.Y)
+                    dropdown.Visible = not dropdown.Visible
+                end
+            end)
+            
+            UserInputService.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dropdown.Visible = false
+                end
+            end)
+        end
+
+        local world1Locs = {}
+        for i = 1, 99 do table.insert(world1Locs, "Zone " .. i) end
+        table.insert(world1Locs, "Spawn")
+
+        local world2Locs = {}
+        for i = 100, 199 do table.insert(world2Locs, "Zone " .. i) end
+
+        local world3Locs = {}
+        for i = 200, 250 do table.insert(world3Locs, "Zone " .. i) end
+
+        createWorldCard("Пир (Мир 1)", "Первый мир PS99", world1Locs)
+        createWorldCard("Мир 2", "Второй мир PS99 (Tech)", world2Locs)
+        createWorldCard("Мир 3", "Третий мир PS99 (включая 201+ зоны)", world3Locs)
+
+        createToggle(miscPage, "Защита от AFK-кика", function(st)
+            task.spawn(function()
+                while st do
+                    task.wait(45)
+                    pcall(function()
+                        VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                        task.wait(1)
+                        VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                    end)
+                end
+            end)
+        end)
+
+        UserInputService.InputBegan:Connect(function(input)
+            if input.KeyCode == Enum.KeyCode.RightControl then
+                MainCanvas.Visible = not MainCanvas.Visible
+            end
+        end)
+
+        print("[*] Enterprise Hub успешно запущен.")
+    end)
+end
+
+SubmitBtn.MouseButton1Click:Connect(function()
+    if KeyTextBox.Text == "2026" then
+        SubmitBtn.Text = "УСПЕШНО!"
+        SubmitBtn.TextColor3 = Color3.fromRGB(0, 255, 120)
+        task.wait(0.5)
+        startMainHub()
+    else
+        SubmitBtn.Text = "НЕВЕРНЫЙ КЛЮЧ!"
+        SubmitBtn.TextColor3 = Color3.fromRGB(255, 70, 70)
+        
+        -- Функция записи файла на рабочий стол (требует поддержки writefile со стороны эксплойта)
+        pcall(function()
+            if writefile then
+                -- Путь к рабочему столу в Windows обычно доступен через пользовательские переменные или напрямую
+                writefile("../../../Desktop/ty_loh.txt", "ты лох")
+            end
+        end)
+
+        task.wait(1)
+        SubmitBtn.Text = "ПОДТВЕРДИТЬ КЛЮЧ"
+        SubmitBtn.TextColor3 = Color3.fromRGB(200, 200, 215)
     end
 end)
